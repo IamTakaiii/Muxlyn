@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Muxlyn Design System · Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./tokens/tokens.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--surface-background);
+      color: var(--text-primary);
+      transition: background var(--motion-duration-base) var(--motion-easing-standard),
+                  color var(--motion-duration-base) var(--motion-easing-standard);
+      line-height: var(--line-height-normal);
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: var(--spacing-8); }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacing-6) var(--spacing-8);
+      border-bottom: 1px solid var(--border-default);
+      background: var(--surface-card);
+      position: sticky; top: 0; z-index: 100;
+      transition: background var(--motion-duration-base) var(--motion-easing-standard);
+    }
+    header h1 { font-size: var(--font-size-heading-lg); font-weight: var(--font-weight-bold); }
+    header .meta { font-size: var(--font-size-body-sm); color: var(--text-secondary); }
+    .theme-toggle {
+      display: flex; align-items: center; gap: var(--spacing-2);
+      padding: var(--spacing-2) var(--spacing-4);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--surface-card);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-body-sm);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all var(--motion-duration-fast) var(--motion-easing-standard);
+    }
+    .theme-toggle:hover { background: var(--surface-raised); }
+    section {
+      margin-bottom: var(--spacing-16);
+      padding-top: var(--spacing-6);
+    }
+    h2 {
+      font-size: var(--font-size-heading-xl); font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--spacing-2);
+      letter-spacing: var(--letter-spacing-tight);
+    }
+    h3 {
+      font-size: var(--font-size-heading-md); font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--spacing-4);
+    }
+    .section-desc {
+      font-size: var(--font-size-body-md); color: var(--text-secondary);
+      margin-bottom: var(--spacing-6);
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-4); }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-3); }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--spacing-3); }
+
+    .swatch-card {
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--surface-card);
+      transition: background var(--motion-duration-base) var(--motion-easing-standard);
+    }
+    .swatch-color {
+      height: 64px;
+    }
+    .swatch-info {
+      padding: var(--spacing-2) var(--spacing-3);
+      font-size: var(--font-size-caption);
+      font-family: var(--font-mono);
+    }
+    .swatch-info .name { font-weight: var(--font-weight-semibold); margin-bottom: 2px; }
+    .swatch-info .hex { color: var(--text-secondary); }
+
+    .type-sample {
+      padding: var(--spacing-4) var(--spacing-0);
+      border-bottom: 1px solid var(--border-default);
+    }
+    .type-sample .label {
+      font-size: var(--font-size-caption); color: var(--text-muted); font-family: var(--font-mono);
+      margin-bottom: var(--spacing-1);
+    }
+    .type-sample .spec {
+      font-size: var(--font-size-caption); color: var(--text-secondary);
+      margin-top: var(--spacing-1);
+    }
+
+    .spacing-bar {
+      height: 32px; background: var(--color-brand-300);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--spacing-2);
+      transition: background var(--motion-duration-base) var(--motion-easing-standard);
+    }
+    .spacing-label { font-size: var(--font-size-caption); color: var(--text-secondary); font-family: var(--font-mono); }
+
+    .radius-box {
+      width: 80px; height: 80px;
+      background: var(--color-brand-100);
+      border: 2px solid var(--color-brand-400);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--font-size-caption); font-family: var(--font-mono);
+      color: var(--color-brand-700);
+      margin-bottom: var(--spacing-2);
+      transition: all var(--motion-duration-base) var(--motion-easing-standard);
+    }
+    .shadow-card {
+      padding: var(--spacing-6);
+      background: var(--surface-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: var(--font-size-caption);
+      color: var(--text-secondary);
+      transition: all var(--motion-duration-base) var(--motion-easing-standard);
+    }
+
+    .motion-demo {
+      padding: var(--spacing-4); background: var(--color-brand-100);
+      border-radius: var(--radius-md); text-align: center; cursor: pointer;
+      font-size: var(--font-size-body-sm); font-weight: var(--font-weight-medium);
+      color: var(--color-brand-700);
+      transition: all var(--motion-duration-base) var(--motion-easing-standard);
+    }
+    .motion-demo:hover { background: var(--color-brand-300); transform: scale(1.05); }
+    .motion-demo.fast { transition-duration: var(--motion-duration-fast); }
+    .motion-demo.slow { transition-duration: var(--motion-duration-slow); }
+    .motion-demo.slower { transition-duration: var(--motion-duration-slower); }
+
+    .comp-section { margin-bottom: var(--spacing-10); }
+    .comp-grid {
+      display: flex; flex-wrap: wrap; gap: var(--spacing-3); align-items: center;
+      padding: var(--spacing-6);
+      background: var(--surface-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-2);
+      padding: var(--spacing-2) var(--spacing-4);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans); font-size: var(--font-size-body-sm); font-weight: var(--font-weight-medium);
+      cursor: pointer; border: none;
+      transition: all var(--motion-duration-fast) var(--motion-easing-standard);
+      text-decoration: none;
+    }
+    .btn:hover { filter: brightness(0.9); }
+    .btn:active { filter: brightness(0.8); }
+    .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+    .btn-primary { background: var(--color-brand-500); color: var(--text-on-brand); }
+    .btn-secondary { background: var(--color-neutral-100); color: var(--text-primary); }
+    .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
+    .btn-outline:hover { background: var(--surface-raised); filter: none; }
+    .btn-ghost { background: transparent; color: var(--text-primary); }
+    .btn-ghost:hover { background: var(--surface-raised); filter: none; }
+    .btn-danger { background: var(--color-danger-500); color: var(--text-inverse); }
+    .btn-sm { padding: var(--spacing-1) var(--spacing-3); font-size: var(--font-size-caption); }
+    .btn-lg { padding: var(--spacing-3) var(--spacing-6); font-size: var(--font-size-body-md); }
+
+    .input {
+      padding: var(--spacing-2) var(--spacing-3);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--surface-background);
+      color: var(--text-primary);
+      font-family: var(--font-sans); font-size: var(--font-size-body-sm);
+      transition: border-color var(--motion-duration-fast) var(--motion-easing-standard);
+    }
+    .input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--color-brand-200); }
+    .input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .input::placeholder { color: var(--text-muted); }
+
+    .card {
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      background: var(--surface-card);
+      padding: var(--spacing-6);
+      transition: all var(--motion-duration-base) var(--motion-easing-standard);
+    }
+    .card-title { font-size: var(--font-size-heading-sm); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-2); }
+    .card-desc { font-size: var(--font-size-body-sm); color: var(--text-secondary); }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 1px var(--spacing-2);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-caption); font-weight: var(--font-weight-medium);
+    }
+    .badge-primary { background: var(--color-brand-100); color: var(--color-brand-700); }
+    .badge-success { background: var(--color-success-100); color: var(--color-success-700); }
+    .badge-warning { background: var(--color-warning-100); color: var(--color-warning-700); }
+    .badge-danger { background: var(--color-danger-100); color: var(--color-danger-700); }
+    .badge-neutral { background: var(--color-neutral-100); color: var(--color-neutral-600); }
+
+    .avatar {
+      width: 40px; height: 40px; border-radius: var(--radius-full);
+      background: var(--color-neutral-200);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--font-size-body-sm); font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+    }
+    .avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-caption); }
+    .avatar-lg { width: 48px; height: 48px; font-size: var(--font-size-body-md); }
+
+    .table {
+      width: 100%; border-collapse: collapse;
+      font-size: var(--font-size-body-sm);
+    }
+    .table th, .table td { padding: var(--spacing-3) var(--spacing-4); text-align: left; }
+    .table th { font-weight: var(--font-weight-semibold); color: var(--text-secondary); border-bottom: 2px solid var(--border-default); }
+    .table td { border-bottom: 1px solid var(--border-default); }
+    .table tr:hover td { background: var(--surface-raised); }
+
+    .tab-list {
+      display: inline-flex; gap: 0;
+      border-bottom: 2px solid var(--border-default);
+      margin-bottom: var(--spacing-4);
+    }
+    .tab-trigger {
+      padding: var(--spacing-2) var(--spacing-4);
+      font-size: var(--font-size-body-sm); font-weight: var(--font-weight-medium);
+      color: var(--text-secondary); background: none; border: none;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      cursor: pointer;
+      transition: all var(--motion-duration-fast) var(--motion-easing-standard);
+    }
+    .tab-trigger:hover { color: var(--text-primary); }
+    .tab-trigger.active { color: var(--text-primary); border-bottom-color: var(--color-brand-500); }
+
+    .toast {
+      display: flex; align-items: flex-start; gap: var(--spacing-3);
+      padding: var(--spacing-4); border-radius: var(--radius-lg);
+      background: var(--surface-card); border: 1px solid var(--border-default);
+      box-shadow: var(--shadow-md);
+      max-width: 360px;
+    }
+    .toast.danger { border-left: 3px solid var(--color-danger-500); }
+    .toast.success { border-left: 3px solid var(--color-success-500); }
+    .toast.warning { border-left: 3px solid var(--color-warning-500); }
+
+    .tooltip-demo {
+      display: inline-block; padding: var(--spacing-1) var(--spacing-3);
+      border-radius: var(--radius-md);
+      background: var(--text-primary); color: var(--text-inverse);
+      font-size: var(--font-size-caption);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .progress-track {
+      width: 100%; height: 12px; background: var(--color-neutral-100);
+      border-radius: var(--radius-full); overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--color-brand-500);
+      border-radius: var(--radius-full);
+      transition: width var(--motion-duration-slow) var(--motion-easing-standard);
+    }
+
+    .separator { width: 100%; height: 1px; background: var(--border-default); margin: var(--spacing-6) 0; }
+
+    .breadcrumb { display: flex; gap: var(--spacing-2); align-items: center; font-size: var(--font-size-body-sm); }
+    .breadcrumb a { color: var(--text-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text-primary); }
+    .breadcrumb .current { color: var(--text-primary); font-weight: var(--font-weight-medium); }
+
+    .menu {
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      background: var(--surface-card); box-shadow: var(--shadow-sm); overflow: hidden; width: 200px;
+    }
+    .menu-item {
+      padding: var(--spacing-2) var(--spacing-3); font-size: var(--font-size-body-sm);
+      cursor: pointer; display: flex; align-items: center; gap: var(--spacing-2);
+      transition: background var(--motion-duration-fast) var(--motion-easing-standard);
+    }
+    .menu-item:hover { background: var(--surface-raised); }
+    .menu-sep { height: 1px; background: var(--border-default); margin: var(--spacing-1) 0; }
+
+    .skeleton {
+      background: var(--color-neutral-200); border-radius: var(--radius-sm);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Muxlyn Design System</h1>
+    <p class="meta">Soft Sky Blue + Warm Gray · {body-xs,body-lg} tokens</p>
+  </div>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+    <span id="themeIcon">&#9728;&#65039;</span>
+    <span id="themeLabel">Dark Mode</span>
+  </button>
+</header>
+
+<div class="container">
+
+<!-- COLORS -->
+<section id="colors">
+  <h2>Colors</h2>
+  <p class="section-desc">All palette scales (50–950). Swatch shows color; info shows token name + hex.</p>
+
+  <h3>Brand &mdash; Sky Blue</h3>
+  <div class="grid-4" id="brand-swatches"></div>
+
+  <h3>Neutral &mdash; Warm Gray (Stone)</h3>
+  <div class="grid-4" id="neutral-swatches"></div>
+
+  <h3>Success &mdash; Emerald Green</h3>
+  <div class="grid-4" id="success-swatches"></div>
+
+  <h3>Warning &mdash; Amber</h3>
+  <div class="grid-4" id="warning-swatches"></div>
+
+  <h3>Danger &mdash; Rose</h3>
+  <div class="grid-4" id="danger-swatches"></div>
+
+  <h3>Surface &amp; Text Semantic Roles</h3>
+  <div class="grid-3" id="semantic-swatches"></div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section id="typography">
+  <h2>Typography</h2>
+  <p class="section-desc">Modular scale 1.25 (Major Third). All sizes, weights, line-heights shown.</p>
+
+  <div class="card">
+    <div id="type-samples"></div>
+  </div>
+</section>
+
+<!-- SPACING -->
+<section id="spacing">
+  <h2>Spacing</h2>
+  <p class="section-desc">4px baseline grid. Each bar is sized by its corresponding spacing token.</p>
+  <div id="spacing-demo"></div>
+</section>
+
+<!-- RADIUS -->
+<section id="radius">
+  <h2>Border Radius</h2>
+  <p class="section-desc">From sharp to fully rounded.</p>
+  <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-4); align-items: flex-end;" id="radius-demo"></div>
+</section>
+
+<!-- SHADOWS -->
+<section id="shadows">
+  <h2>Shadows</h2>
+  <p class="section-desc">Elevation tiers. Light mode uses alpha-black; dark mode adds a glow ring.</p>
+  <div class="grid-3" id="shadow-demo"></div>
+</section>
+
+<!-- MOTION -->
+<section id="motion">
+  <h2>Motion</h2>
+  <p class="section-desc">Hover each box to preview the duration + easing. Hover scales &amp; changes color.</p>
+  <div class="grid-3" id="motion-demo"></div>
+</section>
+
+<!-- COMPONENTS -->
+<section id="components">
+  <h2>Components</h2>
+  <p class="section-desc">Every component in all defined variants and sizes. States shown where interactive.</p>
+
+  <div class="comp-section" id="comp-button"></div>
+  <div class="comp-section" id="comp-input"></div>
+  <div class="comp-section" id="comp-card"></div>
+  <div class="comp-section" id="comp-badge"></div>
+  <div class="comp-section" id="comp-avatar"></div>
+  <div class="comp-section" id="comp-table"></div>
+  <div class="comp-section" id="comp-tabs"></div>
+  <div class="comp-section" id="comp-toast"></div>
+  <div class="comp-section" id="comp-tooltip"></div>
+  <div class="comp-section" id="comp-progress"></div>
+  <div class="comp-section" id="comp-separator"></div>
+  <div class="comp-section" id="comp-breadcrumb"></div>
+  <div class="comp-section" id="comp-menu"></div>
+  <div class="comp-section" id="comp-skeleton"></div>
+</section>
+
+</div>
+
+<script>
+/* ── Theme Toggle ── */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? '' : 'dark';
+  document.getElementById('themeIcon').innerHTML = isDark ? '&#9728;&#65039;' : '&#9790;';
+  document.getElementById('themeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+}
+
+/* ── Color Scales ── */
+const colorScales = {
+  brand: ['50','100','200','300','400','500','600','700','800','900','950'],
+  neutral: ['50','100','200','300','400','500','600','700','800','900','950'],
+  success: ['50','100','200','300','400','500','600','700','800','900','950'],
+  warning: ['50','100','200','300','400','500','600','700','800','900','950'],
+  danger:  ['50','100','200','300','400','500','600','700','800','900','950'],
+};
+
+function renderSwatches(containerId, prefix) {
+  const container = document.getElementById(containerId);
+  const steps = colorScales[prefix.replace('brand','brand').replace('neutral','neutral').replace('success','success').replace('warning','warning').replace('danger','danger')];
+  const scaleKey = containerId.replace('-swatches','').replace('brand','brand').replace('neutral','neutral').replace('success','success').replace('warning','warning').replace('danger','danger');
+
+  let html = '';
+  const scales = { brand: colorScales.brand, neutral: colorScales.neutral, success: colorScales.success, warning: colorScales.warning, danger: colorScales.danger };
+  const stepsArr = scales[scaleKey] || colorScales.brand;
+
+  stepsArr.forEach(step => {
+    const varName = `--color-${scaleKey}-${step}`;
+    html += `<div class="swatch-card">
+      <div class="swatch-color" style="background: var(${varName})"></div>
+      <div class="swatch-info">
+        <div class="name">${scaleKey}-${step}</div>
+        <div class="hex" id="hex-${scaleKey}-${step}"></div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+
+  // Fill hex values after render
+  stepsArr.forEach(step => {
+    const el = document.getElementById(`hex-${scaleKey}-${step}`);
+    if (el) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(`--color-${scaleKey}-${step}`).trim();
+      el.textContent = val;
+    }
+  });
+}
+
+renderSwatches('brand-swatches', 'brand');
+renderSwatches('neutral-swatches', 'neutral');
+renderSwatches('success-swatches', 'success');
+renderSwatches('warning-swatches', 'warning');
+renderSwatches('danger-swatches', 'danger');
+
+/* ── Semantic Surface + Text ── */
+(function() {
+  const roles = [
+    { label: 'Surface Background', css: 'var(--surface-background)', textVar: '--text-primary' },
+    { label: 'Surface Card', css: 'var(--surface-card)', textVar: '--text-primary' },
+    { label: 'Surface Raised', css: 'var(--surface-raised)', textVar: '--text-primary' },
+    { label: 'Text: Primary', css: 'var(--text-primary)', bg: 'var(--surface-card)', text: 'primary on card' },
+    { label: 'Text: Secondary', css: 'var(--text-secondary)', bg: 'var(--surface-card)', text: 'secondary on card' },
+    { label: 'Text: Muted', css: 'var(--text-muted)', bg: 'var(--surface-card)', text: 'muted on card' },
+    { label: 'Text: Link', css: 'var(--text-link)', bg: 'var(--surface-card)', text: 'link on card' },
+    { label: 'Border: Default', css: 'var(--border-default)' },
+    { label: 'Border: Focus', css: 'var(--border-focus)' },
+  ];
+
+  let html = '';
+  roles.forEach(r => {
+    html += `<div class="card" style="padding: var(--spacing-4); background: ${r.bg || r.css}; ${r.label.includes('Border') ? 'border: 2px solid ' + r.css : ''}">
+      <div style="font-size: var(--font-size-caption); font-family: var(--font-mono); color: ${r.textVar ? 'var(' + r.textVar + ')' : 'var(--text-primary)'}; margin-bottom: var(--spacing-1);">
+        ${r.label}
+      </div>
+      <div style="color: ${r.text ? '' : (r.label.includes('Text') ? r.css : '')}; font-size: var(--font-size-body-sm);">
+        ${r.text || (r.label.includes('Surface') ? 'AaBbCc 123' : '\u25A0\u25A0\u25A0\u25A0\u25A0')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('semantic-swatches').innerHTML = html;
+})();
+
+/* ── Typography ── */
+(function() {
+  const types = [
+    { token: 'display-2xl', text: 'Display 2XL', sample: 'The quick brown fox' },
+    { token: 'display-xl', text: 'Display XL', sample: 'The quick brown fox' },
+    { token: 'display-lg', text: 'Display LG', sample: 'The quick brown fox' },
+    { token: 'heading-xl', text: 'Heading XL &mdash; H1', sample: 'Worklog Dashboard' },
+    { token: 'heading-lg', text: 'Heading LG &mdash; H2', sample: 'Worklog Dashboard' },
+    { token: 'heading-md', text: 'Heading MD &mdash; H3', sample: 'Worklog Dashboard' },
+    { token: 'heading-sm', text: 'Heading SM &mdash; H4', sample: 'Worklog Dashboard' },
+    { token: 'body-lg', text: 'Body LG', sample: 'The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.' },
+    { token: 'body-md', text: 'Body MD (default)', sample: 'The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.' },
+    { token: 'body-sm', text: 'Body SM', sample: 'The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.' },
+    { token: 'caption', text: 'Caption', sample: 'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG' },
+    { token: 'mono-md', text: 'Mono MD', sample: 'console.log("Hello Muxlyn"); // PROJ-1234', mono: true },
+  ];
+
+  let html = '';
+  types.forEach(t => {
+    const family = t.mono ? 'var(--font-mono)' : 'var(--font-sans)';
+    html += `<div class="type-sample">
+      <div class="label">${t.token} &middot; var(--font-size-${t.token})</div>
+      <div style="font-size: var(--font-size-${t.token}); font-family: ${family}; line-height: var(--line-height-${t.token.includes('display') ? 'tight' : t.token.includes('heading') ? 'snug' : 'normal'});">
+        ${t.sample}
+      </div>
+      <div class="spec">${t.text}</div>
+    </div>`;
+  });
+  document.getElementById('type-samples').innerHTML = html;
+})();
+
+/* ── Spacing ── */
+(function() {
+  const sizes = ['0','1','2','3','4','5','6','8','10','12','16','20','24','32'];
+  let html = '';
+  sizes.forEach(s => {
+    html += `<div style="margin-bottom: var(--spacing-2);">
+      <div class="spacing-label">spacing-${s} &middot; var(--spacing-${s})</div>
+      <div class="spacing-bar" style="width: var(--spacing-${s})"></div>
+    </div>`;
+  });
+  document.getElementById('spacing-demo').innerHTML = html;
+})();
+
+/* ── Radius ── */
+(function() {
+  const radii = ['none','sm','md','lg','xl','2xl','full'];
+  let html = '';
+  radii.forEach(r => {
+    html += `<div>
+      <div class="radius-box" style="border-radius: var(--radius-${r})">${r}</div>
+      <div class="spacing-label">radius-${r}</div>
+    </div>`;
+  });
+  document.getElementById('radius-demo').innerHTML = html;
+})();
+
+/* ── Shadows ── */
+(function() {
+  const shadows = [
+    { key: 'xs', label: 'xs — Subtle lift' },
+    { key: 'sm', label: 'sm — Dropdowns, tooltips' },
+    { key: 'md', label: 'md — Cards, sticky headers' },
+    { key: 'lg', label: 'lg — Modals' },
+    { key: 'xl', label: 'xl — Command palette' },
+    { key: '2xl', label: '2xl — Full takeover' },
+  ];
+  let html = '';
+  shadows.forEach(s => {
+    html += `<div class="shadow-card" style="box-shadow: var(--shadow-${s.key})">
+      shadow-${s.key}<br/><span style="font-size: var(--font-size-caption);">${s.label}</span>
+    </div>`;
+  });
+  document.getElementById('shadow-demo').innerHTML = html;
+})();
+
+/* ── Motion ── */
+(function() {
+  const motions = [
+    { label: 'fast (120ms) standard', cls: 'fast', dur: 'var(--motion-duration-fast)' },
+    { label: 'base (200ms) standard', cls: '', dur: 'var(--motion-duration-base)' },
+    { label: 'slow (320ms) emphasized', cls: 'slow', dur: 'var(--motion-duration-slow)' },
+    { label: 'slower (500ms)', cls: 'slower', dur: 'var(--motion-duration-slower)' },
+  ];
+  let html = '<div class="grid-3">';
+  motions.forEach(m => {
+    html += `<div class="motion-demo ${m.cls}" style="transition-duration: ${m.dur}">${m.label}<br/><span style="font-size: var(--font-size-caption); opacity: 0.7;">hover me</span></div>`;
+  });
+  html += '</div><p style="margin-top: var(--spacing-4); font-size: var(--font-size-caption); color: var(--text-secondary);">Easing: out (entrance) / in (exit) / standard (default) / emphasized (modals)</p>';
+  document.getElementById('motion-demo').innerHTML = html;
+})();
+
+/* ── COMPONENTS ── */
+
+/* Button */
+document.getElementById('comp-button').innerHTML = `
+  <h3>Button</h3>
+  <div class="comp-grid">
+    <div>
+      <button class="btn btn-primary">Primary</button>
+    </div>
+    <div>
+      <button class="btn btn-secondary">Secondary</button>
+    </div>
+    <div>
+      <button class="btn btn-outline">Outline</button>
+    </div>
+    <div>
+      <button class="btn btn-ghost">Ghost</button>
+    </div>
+    <div>
+      <button class="btn btn-danger">Danger</button>
+    </div>
+    <div>
+      <button class="btn btn-primary" disabled>Disabled</button>
+    </div>
+    <div>
+      <button class="btn btn-primary btn-sm">Small</button>
+    </div>
+    <div>
+      <button class="btn btn-primary btn-lg">Large</button>
+    </div>
+  </div>
+`;
+
+/* Input */
+document.getElementById('comp-input').innerHTML = `
+  <h3>Input</h3>
+  <div class="comp-grid">
+    <input class="input" type="text" placeholder="Placeholder text..." />
+    <input class="input" type="text" value="Filled value" />
+    <input class="input" type="text" disabled value="Disabled" />
+    <input class="input" type="text" value="Error state" style="border-color: var(--color-danger-500); box-shadow: 0 0 0 2px var(--color-danger-100);" />
+    <input class="input" type="email" placeholder="email@example.com" />
+    <input class="input" type="password" placeholder="Password" />
+    <textarea class="input" rows="3" placeholder="Textarea..."></textarea>
+  </div>
+`;
+
+/* Card */
+document.getElementById('comp-card').innerHTML = `
+  <h3>Card</h3>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Card Title</div>
+      <div class="card-desc">Card description with secondary text explaining the content.</div>
+    </div>
+    <div class="card" style="box-shadow: var(--shadow-md);">
+      <div class="card-title">Elevated Card</div>
+      <div class="card-desc">This card has <code>shadow-md</code> applied.</div>
+    </div>
+  </div>
+`;
+
+/* Badge */
+document.getElementById('comp-badge').innerHTML = `
+  <h3>Badge</h3>
+  <div class="comp-grid">
+    <span class="badge badge-primary">Active</span>
+    <span class="badge badge-success">Completed</span>
+    <span class="badge badge-warning">Pending</span>
+    <span class="badge badge-danger">Failed</span>
+    <span class="badge badge-neutral">Jira</span>
+  </div>
+`;
+
+/* Avatar */
+document.getElementById('comp-avatar').innerHTML = `
+  <h3>Avatar</h3>
+  <div class="comp-grid">
+    <div class="avatar avatar-sm">NP</div>
+    <div class="avatar">NP</div>
+    <div class="avatar avatar-lg">NP</div>
+    <div class="avatar" style="background: var(--color-brand-100); color: var(--color-brand-700);">JD</div>
+    <div class="avatar avatar-sm" style="background: var(--color-success-100); color: var(--color-success-700);">MK</div>
+  </div>
+`;
+
+/* Table */
+document.getElementById('comp-table').innerHTML = `
+  <h3>Table</h3>
+  <table class="table">
+    <thead>
+      <tr><th>Key</th><th>Summary</th><th>Hours</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>PROJ-123</code></td><td>Fix login redirect</td><td style="text-align: right;">2.5</td><td><span class="badge badge-success">Done</span></td></tr>
+      <tr><td><code>PROJ-124</code></td><td>Add worklog filter</td><td style="text-align: right;">4.0</td><td><span class="badge badge-warning">In Progress</span></td></tr>
+      <tr><td><code>PROJ-125</code></td><td>Update API docs</td><td style="text-align: right;">1.0</td><td><span class="badge badge-primary">To Do</span></td></tr>
+      <tr><td><code>PROJ-126</code></td><td>Refactor auth hook</td><td style="text-align: right;">3.0</td><td><span class="badge badge-danger">Blocked</span></td></tr>
+    </tbody>
+  </table>
+`;
+
+/* Tabs */
+document.getElementById('comp-tabs').innerHTML = `
+  <h3>Tabs</h3>
+  <div class="tab-list">
+    <button class="tab-trigger active">Worklogs</button>
+    <button class="tab-trigger">Dashboard</button>
+    <button class="tab-trigger">Settings</button>
+    <button class="tab-trigger" disabled style="opacity: 0.5; cursor: not-allowed;">Disabled</button>
+  </div>
+`;
+
+/* Toast */
+document.getElementById('comp-toast').innerHTML = `
+  <h3>Toast</h3>
+  <div style="display: flex; gap: var(--spacing-4); flex-wrap: wrap;">
+    <div class="toast success">
+      <span style="color: var(--color-success-500); font-size: var(--font-size-body-lg);">&#10003;</span>
+      <div><strong>Saved!</strong><br/><span style="font-size: var(--font-size-body-sm); color: var(--text-secondary);">Worklog updated successfully.</span></div>
+    </div>
+    <div class="toast warning">
+      <span style="color: var(--color-warning-500); font-size: var(--font-size-body-lg);">&#9888;</span>
+      <div><strong>Unsaved changes</strong><br/><span style="font-size: var(--font-size-body-sm); color: var(--text-secondary);">You have unsaved edits.</span></div>
+    </div>
+    <div class="toast danger">
+      <span style="color: var(--color-danger-500); font-size: var(--font-size-body-lg);">&#10007;</span>
+      <div><strong>Error</strong><br/><span style="font-size: var(--font-size-body-sm); color: var(--text-secondary);">Failed to sync worklogs.</span></div>
+    </div>
+  </div>
+`;
+
+/* Tooltip */
+document.getElementById('comp-tooltip').innerHTML = `
+  <h3>Tooltip</h3>
+  <div class="comp-grid">
+    <div class="tooltip-demo">Save changes</div>
+    <div class="tooltip-demo">Copy to clipboard</div>
+    <div class="tooltip-demo">&#8984;K — Open command palette</div>
+  </div>
+`;
+
+/* Progress */
+document.getElementById('comp-progress').innerHTML = `
+  <h3>Progress</h3>
+  <div style="display: flex; flex-direction: column; gap: var(--spacing-4);">
+    <div style="display: flex; align-items: center; gap: var(--spacing-3);">
+      <div class="progress-track" style="flex: 1;"><div class="progress-fill" style="width: 30%"></div></div>
+      <span style="font-size: var(--font-size-body-sm); font-family: var(--font-mono);">30%</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: var(--spacing-3);">
+      <div class="progress-track" style="flex: 1;"><div class="progress-fill" style="width: 65%"></div></div>
+      <span style="font-size: var(--font-size-body-sm); font-family: var(--font-mono);">65%</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: var(--spacing-3);">
+      <div class="progress-track" style="flex: 1;"><div class="progress-fill" style="width: 100%; background: var(--color-success-500);"></div></div>
+      <span style="font-size: var(--font-size-body-sm); font-family: var(--font-mono); color: var(--color-success-600);">100% &#10003;</span>
+    </div>
+  </div>
+`;
+
+/* Separator */
+document.getElementById('comp-separator').innerHTML = `
+  <h3>Separator</h3>
+  <p style="margin-bottom: var(--spacing-4);">Content above</p>
+  <div class="separator"></div>
+  <p style="margin-top: var(--spacing-4);">Content below</p>
+  <p style="font-size: var(--font-size-caption); color: var(--text-secondary); margin-top: var(--spacing-3);">Horizontal separator, 1px, <code>var(--border-default)</code></p>
+`;
+
+/* Breadcrumb */
+document.getElementById('comp-breadcrumb').innerHTML = `
+  <h3>Breadcrumb</h3>
+  <nav class="breadcrumb">
+    <a href="#">Home</a><span style="color: var(--text-muted);">&#8250;</span>
+    <a href="#">Projects</a><span style="color: var(--text-muted);">&#8250;</span>
+    <a href="#">Muxlyn</a><span style="color: var(--text-muted);">&#8250;</span>
+    <span class="current">Worklogs</span>
+  </nav>
+`;
+
+/* Dropdown Menu */
+document.getElementById('comp-menu').innerHTML = `
+  <h3>Dropdown Menu</h3>
+  <div class="menu">
+    <div class="menu-item">&#9998; Edit</div>
+    <div class="menu-item">&#128203; Duplicate</div>
+    <div class="menu-sep"></div>
+    <div class="menu-item" style="color: var(--color-danger-500);">&#128465; Delete</div>
+  </div>
+  <p style="font-size: var(--font-size-caption); color: var(--text-secondary); margin-top: var(--spacing-3);">Hover triggers background change on each item.</p>
+`;
+
+/* Skeleton */
+document.getElementById('comp-skeleton').innerHTML = `
+  <h3>Skeleton</h3>
+  <div style="display: flex; flex-direction: column; gap: var(--spacing-3); max-width: 400px;">
+    <div class="skeleton" style="height: 16px; width: 60%;"></div>
+    <div class="skeleton" style="height: 16px; width: 100%;"></div>
+    <div class="skeleton" style="height: 16px; width: 80%;"></div>
+    <div class="skeleton" style="height: 40px; width: 40px; border-radius: var(--radius-full);"></div>
+    <div class="skeleton" style="height: 120px; width: 100%; border-radius: var(--radius-md);"></div>
+  </div>
+`;
+
+/* ── Final: re-render hex values after page load to catch any computed styles ── */
+window.addEventListener('DOMContentLoaded', () => {
+  ['brand','neutral','success','warning','danger'].forEach(scale => {
+    (colorScales[scale] || colorScales.brand).forEach(step => {
+      const el = document.getElementById(`hex-${scale}-${step}`);
+      if (el) el.textContent = getComputedStyle(document.documentElement).getPropertyValue(`--color-${scale}-${step}`).trim();
+    });
+  });
+});
+</script>
+
+</body>
+</html>
