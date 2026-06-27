@@ -1,0 +1,1 @@
+export { jiraConnections } from './jira';

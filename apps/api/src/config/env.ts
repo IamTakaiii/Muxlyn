@@ -19,6 +19,8 @@ function validateEnv() {
     GOOGLE_CLIENT_SECRET: getRequired('GOOGLE_CLIENT_SECRET'),
     FRONTEND_URL: getOptional('FRONTEND_URL', 'http://localhost:5173'),
     CORS_ORIGIN: getOptional('CORS_ORIGIN', 'http://localhost:5173'),
+    ENCRYPTION_KEY: getRequired('ENCRYPTION_KEY'),
+    RESEND_API_KEY: getOptional('RESEND_API_KEY', ''),
     LOG_LEVEL: getOptional('LOG_LEVEL', 'info'),
     PORT: Number(getOptional('PORT', '3000')),
     NODE_ENV: getOptional('NODE_ENV', 'development'),

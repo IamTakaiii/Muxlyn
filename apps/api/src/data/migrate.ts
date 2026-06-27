@@ -61,6 +61,43 @@ async function migrate() {
       CREATE INDEX IF NOT EXISTS "account_providerId_idx" ON "account"("providerId");
     `);
 
+    console.log('Running session extension migrations...');
+
+    await pool.query(`
+      ALTER TABLE "session"
+        ADD COLUMN IF NOT EXISTS "remember_me" BOOLEAN NOT NULL DEFAULT false;
+
+      ALTER TABLE "session"
+        ADD COLUMN IF NOT EXISTS "remembered_ip" TEXT;
+    `);
+
+    console.log('Running jira_connections migration...');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "jira_connections" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "user_id" UUID NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "jira_url" TEXT NOT NULL,
+        "jira_account_id" TEXT NOT NULL,
+        "display_name" TEXT,
+        "email" TEXT,
+        "avatar_url" TEXT,
+        "api_token_encrypted" TEXT NOT NULL,
+        "is_active" BOOLEAN NOT NULL DEFAULT false,
+        "status" TEXT NOT NULL DEFAULT 'connected',
+        "last_validated_at" TIMESTAMPTZ,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS "idx_jira_connections_user_account"
+        ON "jira_connections" ("user_id", "jira_account_id");
+      CREATE INDEX IF NOT EXISTS "idx_jira_connections_user_id"
+        ON "jira_connections" ("user_id");
+      CREATE INDEX IF NOT EXISTS "idx_jira_connections_active"
+        ON "jira_connections" ("user_id", "is_active") WHERE "is_active" = true;
+    `);
+
     console.log('Migrations complete.');
   } catch (err) {
     console.error('Migration failed:', err);
