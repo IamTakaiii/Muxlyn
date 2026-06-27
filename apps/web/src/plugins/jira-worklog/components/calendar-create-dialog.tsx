@@ -5,6 +5,8 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { DatePicker } from '@/shared/components/ui/date-picker';
+import { TimePicker } from '@/shared/components/ui/time-picker';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +48,12 @@ function datesBetween(from: string, to: string): string[] {
   return dates;
 }
 
+function isWeekend(dateStr: string): boolean {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+
 function formatDisplayDate(d: string): string {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
@@ -65,6 +73,7 @@ export function CalendarCreateDialog({
   const [selectedIssue, setSelectedIssue] = useState<IssueSearchItem | null>(null);
   const [dateFrom, setDateFrom] = useState(date);
   const [dateTo, setDateTo] = useState(date);
+  const [skipWeekends, setSkipWeekends] = useState(true);
   const [startH, setStartH] = useState(9);
   const [startM, setStartM] = useState(0);
   const [hours, setHours] = useState(2);
@@ -77,9 +86,12 @@ export function CalendarCreateDialog({
   const isLoading = searchMutation.isPending || createMutation.isPending;
 
   const dayCount = useMemo(() => {
-    const days = datesBetween(dateFrom, dateTo);
-    return Math.max(1, days.length);
-  }, [dateFrom, dateTo]);
+    let days = datesBetween(dateFrom, dateTo);
+    if (skipWeekends) {
+      days = days.filter((d) => !isWeekend(d));
+    }
+    return Math.max(0, days.length);
+  }, [dateFrom, dateTo, skipWeekends]);
 
   const totalHours = useMemo(() => {
     const durationSeconds = hours * 3600 + minutes * 60;
@@ -98,18 +110,19 @@ export function CalendarCreateDialog({
     );
   }, [searchText, searchMutation]);
 
-  const handleSelectIssue = useCallback((issue: IssueSearchItem) => {
-    setSelectedIssue(issue);
-    setResults(null);
-  }, []);
-
   const handleSubmit = useCallback(() => {
-    if (!selectedIssue) return;
+    const targetIssueId = selectedIssue ? selectedIssue.id : searchText.trim();
+    if (!targetIssueId) return;
+
     const durationSeconds = hours * 3600 + minutes * 60;
-    const dates = datesBetween(dateFrom, dateTo);
+    let dates = datesBetween(dateFrom, dateTo);
+    if (skipWeekends) {
+      dates = dates.filter((d) => !isWeekend(d));
+    }
+    if (dates.length === 0) return;
     const started = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}:00`;
     const entries: BulkCreateEntry[] = dates.map((d) => ({
-      issueId: selectedIssue.id,
+      issueId: targetIssueId,
       date: d,
       durationSeconds,
       comment: comment || undefined,
@@ -123,7 +136,7 @@ export function CalendarCreateDialog({
         }
       },
     });
-  }, [selectedIssue, dateFrom, dateTo, hours, minutes, comment, createMutation, onCreated]);
+  }, [selectedIssue, searchText, dateFrom, dateTo, hours, minutes, comment, createMutation, onCreated, skipWeekends, startH, startM]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -134,6 +147,7 @@ export function CalendarCreateDialog({
         setSelectedIssue(null);
         setDateFrom(date);
         setDateTo(date);
+        setSkipWeekends(true);
         setStartH(9);
         setStartM(0);
         setHours(2);
@@ -187,7 +201,7 @@ export function CalendarCreateDialog({
                     ) : (
                       <XCircle className="h-4 w-4 text-destructive shrink-0" />
                     )}
-                    <span className="font-medium">{r.issueKey}</span>
+                    <span className="font-medium">{r.issueKey || r.issueId}</span>
                     {r.status === 'success' ? (
                       <span className="text-muted-foreground">({r.hours}h)</span>
                     ) : (
@@ -199,32 +213,73 @@ export function CalendarCreateDialog({
             )}
             <Button variant="outline" onClick={handleClose} className="w-full">Close</Button>
           </div>
-        ) : selectedIssue ? (
+        ) : (
           <>
-            <div className="px-6 py-5 space-y-5">
-              {/* Selected issue info */}
-              <div className="rounded-md border bg-muted/30 p-3">
-                <div className="flex items-center justify-between">
-                  <button
+            <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Issue Input & Search */}
+              <div className="space-y-1.5">
+                <Label htmlFor="issue-key" className="text-xs text-muted-foreground">Jira Issue (Key or Search)</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="issue-key"
+                      placeholder="Enter key (e.g. LMP-5472) or search..."
+                      value={searchText}
+                      onChange={(e) => {
+                        setSearchText(e.target.value);
+                        setSelectedIssue(null);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      className="pl-8 h-9 text-sm"
+                    />
+                  </div>
+                  <Button
                     type="button"
-                    onClick={() => {
-                      setSelectedIssue(null);
-                      setResults([]);
-                      setSearchText('');
-                    }}
-                    className="text-xs text-muted-foreground hover:text-foreground"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSearch}
+                    disabled={isLoading || !searchText.trim()}
                   >
-                    ← Change issue
-                  </button>
-                  {selectedIssue.isSubtask && (
-                    <span className="text-xs text-destructive font-medium">Cannot log sub-tasks</span>
-                  )}
+                    {searchMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                    Search
+                  </Button>
                 </div>
-                <p className="font-mono font-medium mt-1.5">{selectedIssue.key}</p>
-                <p className="text-sm text-muted-foreground truncate">{selectedIssue.summary}</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
-                  {selectedIssue.issueType} · {selectedIssue.status} · {selectedIssue.projectKey}
-                </p>
+                {selectedIssue && (
+                  <div className="rounded-md border border-green-500/20 bg-green-50/50 dark:bg-green-950/10 p-2.5 mt-1.5 text-xs">
+                    <p className="font-mono font-medium text-green-700 dark:text-green-400">Selected: {selectedIssue.key}</p>
+                    <p className="text-muted-foreground truncate">{selectedIssue.summary}</p>
+                  </div>
+                )}
+                {results && results.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No issues found.</p>
+                )}
+                {results && results.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto rounded-md border divide-y bg-background mt-1.5">
+                    {results.map((issue) => (
+                      <button
+                        key={issue.id}
+                        type="button"
+                        onClick={() => {
+                          setSearchText(issue.key);
+                          setSelectedIssue(issue);
+                          setResults(null);
+                        }}
+                        disabled={issue.isSubtask}
+                        className={cn(
+                          'w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors text-xs flex justify-between items-center',
+                          issue.isSubtask && 'opacity-50'
+                        )}
+                      >
+                        <div className="truncate pr-2">
+                          <span className="font-mono font-medium">{issue.key}</span>
+                          <span className="ml-2 text-muted-foreground truncate">{issue.summary}</span>
+                        </div>
+                        {issue.isSubtask && <span className="text-[10px] text-destructive shrink-0">(sub-task)</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Date range */}
@@ -259,16 +314,22 @@ export function CalendarCreateDialog({
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Input
-                    type="time"
-                    value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
-                    onChange={(e) => { const [h, m] = e.target.value.split(':').map(Number); setStartH(h); setStartM(m); }}
-                    className="h-9 w-[110px]"
-                    step={300}
-                  />
-                  <span className="text-xs text-muted-foreground">start time</span>
+                <div className="pt-1">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">Start Time</Label>
+                    <TimePicker
+                      value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
+                      onChange={(timeVal) => {
+                        const [h, m] = timeVal.split(':').map(Number);
+                        setStartH(h);
+                        setStartM(m);
+                      }}
+                    />
+                  </div>
                 </div>
+                {dayCount > 1 && (
+                  <p className="text-[11px] text-muted-foreground">{dayCount} days</p>
+                )}
               </div>
 
               {/* Duration */}
@@ -286,7 +347,7 @@ export function CalendarCreateDialog({
                       value={hours || ''}
                       placeholder="0"
                       onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
-                      className="h-9 text-center"
+                      className="h-9 text-center text-sm"
                     />
                     <span className="text-sm text-muted-foreground font-medium">h</span>
                   </div>
@@ -298,7 +359,7 @@ export function CalendarCreateDialog({
                       value={minutes || ''}
                       placeholder="0"
                       onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                      className="h-9 text-center"
+                      className="h-9 text-center text-sm"
                     />
                     <span className="text-sm text-muted-foreground font-medium">m</span>
                   </div>
@@ -317,154 +378,50 @@ export function CalendarCreateDialog({
                 />
               </div>
 
+              {/* Skip weekends checkbox */}
+              <div className="flex items-center gap-2 pt-1">
+                <Checkbox
+                  id="skip-weekends-active"
+                  checked={skipWeekends}
+                  onCheckedChange={(checked) => setSkipWeekends(!!checked)}
+                />
+                <Label
+                  htmlFor="skip-weekends-active"
+                  className="text-xs text-muted-foreground font-normal cursor-pointer select-none"
+                >
+                  Skip weekends (Sat/Sun)
+                </Label>
+              </div>
+
               {errorText && (
-                <p className="text-sm text-destructive bg-destructive/5 rounded-md px-3 py-2">{errorText}</p>
+                <p className="text-sm text-destructive bg-destructive/5 rounded-md px-3 py-2">
+                  {errorText}
+                </p>
               )}
             </div>
 
             <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/30">
               <div className="text-sm text-muted-foreground">
-                {dayCount} {dayCount === 1 ? 'entry' : 'entries'} · {totalHours}h total
+                {dayCount} {dayCount === 1 ? 'day' : 'days'} · {totalHours}h total
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleClose} disabled={isLoading}>Cancel</Button>
+                <Button variant="outline" size="sm" onClick={handleClose} disabled={isLoading}>
+                  Cancel
+                </Button>
                 <Button
                   size="sm"
                   onClick={handleSubmit}
-                  disabled={isLoading || selectedIssue.isSubtask || (hours === 0 && minutes === 0)}
+                  disabled={
+                    isLoading ||
+                    (hours === 0 && minutes === 0) ||
+                    dayCount === 0 ||
+                    !searchText.trim() ||
+                    (selectedIssue?.isSubtask || false)
+                  }
                 >
                   {createMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
                   Log {totalHours}h
                 </Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="px-6 py-5 space-y-4">
-              {/* Date range — visible immediately */}
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Date &amp; Start
-                </Label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">Start Date</Label>
-                    <DatePicker
-                      value={dateFrom}
-                      onChange={(v) => {
-                        setDateFrom(v);
-                        if (v > dateTo) {
-                          setDateTo(v);
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">End Date</Label>
-                    <DatePicker
-                      value={dateTo}
-                      onChange={(v) => {
-                        setDateTo(v);
-                        if (v < dateFrom) {
-                          setDateFrom(v);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Input
-                    type="time"
-                    value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
-                    onChange={(e) => { const [h, m] = e.target.value.split(':').map(Number); setStartH(h); setStartM(m); }}
-                    className="h-9 w-[110px]"
-                    step={300}
-                  />
-                  <span className="text-xs text-muted-foreground">start time</span>
-                </div>
-                {dayCount > 1 && (
-                  <p className="text-[11px] text-muted-foreground">{dayCount} days</p>
-                )}
-              </div>
-
-              {/* Duration */}
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  Duration per day
-                </Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center gap-1.5">
-                    <Input type="number" min={0} max={24} value={hours || ''} placeholder="0"
-                      onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
-                      className="h-9 text-center" />
-                    <span className="text-sm text-muted-foreground font-medium">h</span>
-                  </div>
-                  <div className="flex-1 flex items-center gap-1.5">
-                    <Input type="number" min={0} max={59} value={minutes || ''} placeholder="0"
-                      onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                      className="h-9 text-center" />
-                    <span className="text-sm text-muted-foreground font-medium">m</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div className="space-y-1.5">
-                <Label htmlFor="create-comment" className="text-xs text-muted-foreground">Comment</Label>
-                <Textarea id="create-comment" value={comment} onChange={(e) => setComment(e.target.value)}
-                  placeholder="What did you work on?" className="h-20 resize-none text-sm" />
-              </div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground font-medium">assign to issue</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search issue by key or summary..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-8"
-                />
-              </div>
-              <Button onClick={handleSearch} disabled={isLoading || !searchText.trim()} className="w-full">
-                {searchMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                Search
-              </Button>
-
-              {results && results.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-2">No issues found.</p>
-              )}
-
-              {results && results.length > 0 && (
-                <div className="max-h-52 overflow-y-auto rounded-md border divide-y">
-                  {results.map((issue) => (
-                    <button key={issue.id} type="button"
-                      onClick={() => handleSelectIssue(issue)}
-                      disabled={issue.isSubtask}
-                      className={cn('w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors', issue.isSubtask && 'opacity-50')}>
-                      <span className="font-mono font-medium text-sm">{issue.key}</span>
-                      <span className="ml-2 text-sm text-muted-foreground truncate block">{issue.summary}</span>
-                      <span className="text-xs text-muted-foreground/60">{issue.issueType} · {issue.projectKey}{issue.isSubtask && ' · SUB-TASK'}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/30">
-              <div className="text-sm text-muted-foreground">{dayCount} {dayCount === 1 ? 'day' : 'days'}</div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleClose}>Cancel</Button>
               </div>
             </div>
           </>

@@ -5,6 +5,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { DatePicker } from '@/shared/components/ui/date-picker';
+import { TimePicker } from '@/shared/components/ui/time-picker';
 import {
   Dialog,
   DialogContent,
@@ -151,16 +152,14 @@ export function WorklogEditDialog({
                   onChange={setDate}
                   className="w-full sm:flex-1"
                 />
-                <Input
-                  type="time"
+                <TimePicker
                   value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(':').map(Number);
+                  onChange={(timeVal) => {
+                    const [h, m] = timeVal.split(':').map(Number);
                     setStartH(h);
                     setStartM(m);
                   }}
-                  className="h-9 w-full sm:w-[110px]"
-                  step={300}
+                  className="w-full sm:w-auto"
                 />
               </div>
             </div>
