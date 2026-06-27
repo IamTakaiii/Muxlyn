@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { DatePicker } from '@/shared/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -113,7 +114,7 @@ export function WorklogEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[400px] gap-0 p-0 overflow-hidden">
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[400px] gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="text-base font-semibold">
             Edit Worklog
@@ -144,12 +145,11 @@ export function WorklogEditDialog({
                 <Calendar className="h-3.5 w-3.5" />
                 Date &amp; Start
               </Label>
-              <div className="flex gap-2">
-                <Input
-                  type="date"
+              <div className="flex flex-col sm:flex-row gap-2">
+                <DatePicker
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="h-9 flex-1"
+                  onChange={setDate}
+                  className="w-full sm:flex-1"
                 />
                 <Input
                   type="time"
@@ -159,7 +159,7 @@ export function WorklogEditDialog({
                     setStartH(h);
                     setStartM(m);
                   }}
-                  className="h-9 w-[110px]"
+                  className="h-9 w-full sm:w-[110px]"
                   step={300}
                 />
               </div>

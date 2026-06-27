@@ -23,6 +23,7 @@ export interface BulkCreateEntry {
   date: string;
   durationSeconds: number;
   comment?: string;
+  started?: string;
 }
 
 export interface BulkCreateResult {

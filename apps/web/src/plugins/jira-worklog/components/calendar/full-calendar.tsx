@@ -192,6 +192,9 @@ export function FullCalendarWrapper({
             onDateSelect(arg.startStr);
             calendarRef.current?.getApi().unselect();
           }}
+          dateClick={(arg) => {
+            onDateSelect(arg.dateStr);
+          }}
           eventDrop={(arg: EventDropArg) => {
             const { worklogId } = arg.event.extendedProps as CalendarEvent['extendedProps'];
             onEventDrop(worklogId, arg.event.startStr);

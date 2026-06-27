@@ -157,7 +157,13 @@ function buildJql(filters: WorklogSearchFilters): string {
   const parts: string[] = ['worklogAuthor = currentUser()'];
 
   if (filters.freeText) {
-    parts.push(`text ~ "${filters.freeText.replace(/"/g, '\\"')}"`);
+    const escaped = filters.freeText.replace(/"/g, '\\"').replace(/'/g, "\\'");
+    // Issue key pattern: ABC-123, PROJ-42 — use exact match for better perf
+    if (/^[A-Z][A-Z0-9]*-[0-9]+$/i.test(escaped.trim())) {
+      parts.push(`issuekey = "${escaped.trim()}"`);
+    } else {
+      parts.push(`text ~ "${escaped}"`);
+    }
   }
   if (filters.project) {
     parts.push(`project = "${filters.project}"`);
