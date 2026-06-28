@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { Input } from '@/shared/components/ui/input';
-import { cn } from '@/shared/lib/utils';
+import { cn, formatHours } from '@/shared/lib/utils';
 import { useWorklogSearch, type WorklogSearchFilters, type WorklogSearchItem } from '../api/search';
 import { useBulkSelection } from '../hooks/use-bulk-selection';
 import { BulkActionToolbar } from './bulk-action-toolbar';
@@ -157,7 +157,7 @@ export function HistoryTab() {
       case 'date':
         return item.date;
       case 'hours':
-        return `${item.hours}h`;
+        return formatHours(item.hours);
       case 'comment':
         return item.comment ?? '-';
     }
@@ -336,7 +336,7 @@ export function HistoryTab() {
                   <td className="px-3 py-2" colSpan={visibleColumns.length - 1}>
                     Total
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{result.totalHours}h</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{formatHours(result.totalHours)}</td>
                 </tr>
               </tfoot>
             </table>
