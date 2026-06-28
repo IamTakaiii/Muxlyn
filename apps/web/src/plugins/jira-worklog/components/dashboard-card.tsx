@@ -19,13 +19,11 @@ export default function JiraDashboardCard({ connection, summary }: DashboardCard
     <Link to="/jira" className="block transition-colors hover:no-underline">
       <Card className="hover:border-primary/50 cursor-pointer h-full">
         <CardHeader className="flex flex-row items-center gap-3">
-          <CalendarIcon className="h-8 w-8 text-primary" />
-          <div>
+          <CalendarIcon className="h-8 w-8 text-primary shrink-0" />
+          <div className="min-w-0 flex-1">
             <CardTitle>{t('nav.jiraManagement')}</CardTitle>
-            <CardDescription>
-              {isConnected
-                ? (summary?.stats ?? t('dashboard.connected'))
-                : t('dashboard.not_connected')}
+            <CardDescription className="truncate">
+              {t('worklog.calendar_desc')}
             </CardDescription>
           </div>
         </CardHeader>

@@ -134,22 +134,29 @@ export function DashboardPage() {
       </div>
 
       {cards.length > 0 && (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map((card) => {
-            const plugin = plugins.find((p) => p.dashboardCard === card);
-            const conn = plugin && !connectionsLoading
-              ? findActiveConnection(jiraConnections, plugin)
-              : null;
-            return (
-              <PluginErrorBoundary key={card.order}>
-                <Suspense fallback={
-                  <Card><CardHeader><Skeleton className="h-5 w-32" /><Skeleton className="h-4 w-48" /></CardHeader><CardContent><Skeleton className="h-16 w-full" /></CardContent></Card>
-                }>
-                  <card.component connection={conn} />
-                </Suspense>
-              </PluginErrorBoundary>
-            );
-          })}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {t('dashboard.build_in_tools')}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cards.map((card) => {
+              const plugin = plugins.find((p) => p.dashboardCard === card);
+              const conn = plugin && !connectionsLoading
+                ? findActiveConnection(jiraConnections, plugin)
+                : null;
+              return (
+                <PluginErrorBoundary key={card.order}>
+                  <Suspense fallback={
+                    <Card><CardHeader><Skeleton className="h-5 w-32" /><Skeleton className="h-4 w-48" /></CardHeader><CardContent><Skeleton className="h-16 w-full" /></CardContent></Card>
+                  }>
+                    <card.component connection={conn} />
+                  </Suspense>
+                </PluginErrorBoundary>
+              );
+            })}
+          </div>
         </div>
       )}
 

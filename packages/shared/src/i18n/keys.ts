@@ -163,7 +163,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'nav.home': 'Home',
     'nav.dashboard': 'Dashboard',
-    'nav.jiraManagement': 'Jira Management',
+    'nav.jiraManagement': 'Jira Worklog',
     'nav.worklog': 'Worklog',
     'nav.worklogHistory': 'History',
     'nav.settings': 'Settings',
@@ -185,6 +185,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.connected': 'Connected',
     'dashboard.not_connected': 'Not connected',
     'dashboard.connect_now': 'Connect now',
+    'dashboard.build_in_tools': 'Build-In Tools',
 
     'worklog.search_placeholder': 'Search and create worklog entries.',
     'worklog.search_desc': 'Search for existing worklogs or create new entries.',
@@ -515,7 +516,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'nav.home': 'หน้าแรก',
     'nav.dashboard': 'แดชบอร์ด',
-    'nav.jiraManagement': 'จัดการ Jira',
+    'nav.jiraManagement': 'บันทึกงาน Jira',
     'nav.worklog': 'บันทึกงาน',
     'nav.worklogHistory': 'ประวัติ',
     'nav.settings': 'ตั้งค่า',
@@ -537,6 +538,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.connected': 'เชื่อมต่อแล้ว',
     'dashboard.not_connected': 'ยังไม่ได้เชื่อมต่อ',
     'dashboard.connect_now': 'เชื่อมต่อเลย',
+    'dashboard.build_in_tools': 'เครื่องมือภายใน',
 
     'worklog.search_placeholder': 'ค้นหาและสร้างบันทึกงาน',
     'worklog.search_desc': 'ค้นหาบันทึกงานที่มีอยู่หรือสร้างใหม่',
