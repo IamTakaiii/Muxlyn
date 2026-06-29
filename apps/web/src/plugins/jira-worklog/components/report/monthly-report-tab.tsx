@@ -1,14 +1,23 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ArrowDownUp,
+  ArrowUpDown,
   Calendar,
+  CalendarDays,
   ChevronDown,
+  ChevronRight,
   Columns3,
   Download,
+  FileBarChart2,
   Layers,
+  LayoutGrid,
   RotateCw,
   Search,
+  Table2,
+  TrendingUp,
   User,
+  Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -215,33 +224,52 @@ const StatsBar = React.memo(function StatsBar({
     () => new Set(epics.flatMap((e) => e.users.map((u) => u.accountId))).size,
     [epics],
   );
+  const totalIssues = useMemo(
+    () => epics.flatMap((e) => e.users.flatMap((u) => u.issues)).length,
+    [epics],
+  );
 
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <Card>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <Card className="border-l-2 border-l-blue-500">
         <CardContent className="flex items-center gap-3 py-4">
-          <Layers className="h-5 w-5 text-primary" />
-          <div>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950">
+            <Layers className="h-4.5 w-4.5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="min-w-0 flex-1">
             <p className="text-2xl font-bold tabular-nums">{epics.length}</p>
             <p className="text-xs text-muted-foreground">{t('report.epics', 'Epics')}</p>
           </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="flex items-center gap-3 py-4">
-          <Calendar className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-2xl font-bold tabular-nums">{formatHours(totalSeconds)}</p>
-            <p className="text-xs text-muted-foreground">{t('report.total_time', 'Total Time')}</p>
+          <div className="hidden sm:block ml-auto text-xs text-muted-foreground whitespace-nowrap">
+            {totalIssues} issues
           </div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border-l-2 border-l-emerald-500">
         <CardContent className="flex items-center gap-3 py-4">
-          <User className="h-5 w-5 text-primary" />
-          <div>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950">
+            <TrendingUp className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-2xl font-bold tabular-nums">{formatHours(totalSeconds)}</p>
+            <p className="text-xs text-muted-foreground">{t('report.total_time', 'Total Time')}</p>
+          </div>
+          <div className="hidden sm:block ml-auto text-xs text-muted-foreground whitespace-nowrap">
+            {formatDuration(totalSeconds)}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="border-l-2 border-l-purple-500">
+        <CardContent className="flex items-center gap-3 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-950">
+            <Users className="h-4.5 w-4.5 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div className="min-w-0 flex-1">
             <p className="text-2xl font-bold tabular-nums">{contributorCount}</p>
             <p className="text-xs text-muted-foreground">{t('report.contributors', 'Contributors')}</p>
+          </div>
+          <div className="hidden sm:block ml-auto text-xs text-muted-foreground whitespace-nowrap">
+            {contributorCount === 1 ? 'person' : 'people'}
           </div>
         </CardContent>
       </Card>
@@ -331,13 +359,18 @@ const EpicCard = React.memo(function EpicCard({
   );
 
   return (
-    <Card className="group">
-      <CardHeader className="cursor-pointer pb-3" onClick={() => setExpanded(!expanded)}>
+    <Card className={cn('group transition-shadow hover:shadow-sm', expanded && 'shadow-sm')}>
+      <CardHeader
+        className="cursor-pointer select-none pb-3"
+        onClick={() => setExpanded(!expanded)}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base flex items-center gap-2">
-              <span className="font-mono text-sm text-primary">{epic.epicKey}</span>
-              <span className="truncate">{epic.epicSummary}</span>
+              <span className="font-mono text-xs rounded bg-primary/10 px-1.5 py-0.5 text-primary shrink-0">
+                {epic.epicKey}
+              </span>
+              <span className="truncate text-sm font-medium">{epic.epicSummary}</span>
             </CardTitle>
             {customFieldEntries.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -347,28 +380,36 @@ const EpicCard = React.memo(function EpicCard({
                     variant="secondary"
                     className="max-w-full gap-1 rounded-md border bg-muted/50 px-2 py-1 font-normal"
                   >
-                    <span className="text-muted-foreground">{fieldLabels.get(fieldId) ?? fieldId}</span>
+                    <span className="text-muted-foreground">{fieldLabels.get(fieldId) ?? fieldId}:</span>
                     <span className="max-w-[220px] truncate font-medium text-foreground">{value}</span>
                   </Badge>
                 ))}
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-sm font-medium tabular-nums">{formatHours(epic.totalTimeSeconds)}</span>
-            <ChevronDown
-              className={cn('h-4 w-4 text-muted-foreground transition-transform', expanded && 'rotate-180')}
-            />
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="rounded-full bg-muted px-2.5 py-1 text-sm font-semibold tabular-nums">
+              {formatHours(epic.totalTimeSeconds)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {epic.users.length} {epic.users.length === 1 ? 'person' : 'people'}
+            </span>
+            {expanded
+              ? <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform rotate-180" />
+              : <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
+            }
           </div>
         </div>
       </CardHeader>
 
       {expanded && (
-        <CardContent className="pt-0 pb-4 space-y-4">
+        <CardContent className="border-t pt-4 pb-4 space-y-4">
           <ContributionChartMemo bars={bars} totalSeconds={epic.totalTimeSeconds} />
-          {epic.users.map((user) => (
-            <EpicUserRow key={user.accountId} user={user} columns={columns} totalEpicSeconds={epic.totalTimeSeconds} />
-          ))}
+          <div className="space-y-3">
+            {epic.users.map((user) => (
+              <EpicUserRow key={user.accountId} user={user} columns={columns} totalEpicSeconds={epic.totalTimeSeconds} />
+            ))}
+          </div>
         </CardContent>
       )}
     </Card>
@@ -441,7 +482,12 @@ const ReportTable = React.memo(function ReportTable({
     [filteredRows],
   );
 
-  const sortLabel = (key: ReportSortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '');
+  const SortIcon = ({ colKey }: { colKey: ReportSortKey }) => {
+    if (sortKey !== colKey) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowDownUp className="ml-1 inline h-3 w-3 text-primary" />
+      : <ArrowDownUp className="ml-1 inline h-3 w-3 text-primary rotate-180" />;
+  };
   const showEpic = columns.includes('epic');
   const showUser = columns.includes('user');
   const showEmail = columns.includes('email');
@@ -483,13 +529,17 @@ const ReportTable = React.memo(function ReportTable({
       <CardContent className="p-0">
         <div className="max-h-[620px] overflow-auto">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-background">
-              <TableRow>
+            <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+              <TableRow className="border-b">
                 {showEpic && (
                   <>
                     <TableHead className="min-w-28">
-                      <button type="button" onClick={() => handleSort('epic')} className="font-medium">
-                        Epic{sortLabel('epic')}
+                      <button
+                        type="button"
+                        onClick={() => handleSort('epic')}
+                        className="flex items-center font-medium hover:text-foreground"
+                      >
+                        Epic<SortIcon colKey="epic" />
                       </button>
                     </TableHead>
                     <TableHead className="min-w-64">Epic Summary</TableHead>
@@ -500,8 +550,12 @@ const ReportTable = React.memo(function ReportTable({
                 )}
                 {showUser && (
                   <TableHead className="min-w-44">
-                    <button type="button" onClick={() => handleSort('user')} className="font-medium">
-                      User{sortLabel('user')}
+                    <button
+                      type="button"
+                      onClick={() => handleSort('user')}
+                      className="flex items-center font-medium hover:text-foreground"
+                    >
+                      User<SortIcon colKey="user" />
                     </button>
                   </TableHead>
                 )}
@@ -509,8 +563,12 @@ const ReportTable = React.memo(function ReportTable({
                 {showIssues && (
                   <>
                     <TableHead className="min-w-28">
-                      <button type="button" onClick={() => handleSort('issue')} className="font-medium">
-                        Issue{sortLabel('issue')}
+                      <button
+                        type="button"
+                        onClick={() => handleSort('issue')}
+                        className="flex items-center font-medium hover:text-foreground"
+                      >
+                        Issue<SortIcon colKey="issue" />
                       </button>
                     </TableHead>
                     <TableHead className="min-w-64">Issue Summary</TableHead>
@@ -520,8 +578,12 @@ const ReportTable = React.memo(function ReportTable({
                   <>
                     <TableHead className="min-w-28">Time Spent</TableHead>
                     <TableHead className="min-w-24 text-right">
-                      <button type="button" onClick={() => handleSort('hours')} className="font-medium">
-                        Hours{sortLabel('hours')}
+                      <button
+                        type="button"
+                        onClick={() => handleSort('hours')}
+                        className="flex items-center justify-end font-medium hover:text-foreground"
+                      >
+                        Hours<SortIcon colKey="hours" />
                       </button>
                     </TableHead>
                   </>
@@ -824,181 +886,192 @@ export function MonthlyReportTab() {
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex rounded-md border p-0.5">
-          {([
-            ['my', t('report.my_worklogs', 'My')],
-            ['project', t('report.by_project', 'Project')],
-            ['board', t('report.by_board', 'Board')],
-            ['epic', t('report.by_epic', 'Epic')],
-          ] as [FilterMode, string][]).map(([m, label]) => (
-            <Button
-              key={m}
-              variant={mode === m ? 'primary' : 'ghost'}
-              size="sm"
-              className="text-xs h-7 px-2.5"
-              onClick={() => handleMode(m)}
-            >
-              {label}
-            </Button>
-          ))}
+      <div className="rounded-lg border bg-card p-3 space-y-3">
+        {/* Row 1: scope + context picker */}
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs font-medium text-muted-foreground whitespace-nowrap">View by</p>
+          <div className="flex rounded-md border p-0.5">
+            {([
+              ['my', t('report.my_worklogs', 'My worklogs')],
+              ['project', t('report.by_project', 'Project')],
+              ['board', t('report.by_board', 'Board')],
+              ['epic', t('report.by_epic', 'Epic')],
+            ] as [FilterMode, string][]).map(([m, label]) => (
+              <Button
+                key={m}
+                variant={mode === m ? 'primary' : 'ghost'}
+                size="sm"
+                className="text-xs h-7 px-2.5"
+                onClick={() => handleMode(m)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+
+          {showProjectInput && (
+            <AsyncCombobox
+              options={projectOptions}
+              value={projectKey}
+              onChange={setProjectKey}
+              loading={projectsLoading}
+              placeholder={t('report.project_key_placeholder', 'Select project...')}
+              searchPlaceholder="Search projects..."
+              emptyText={projectsLoading ? 'Loading projects...' : t('report.no_projects', 'No projects found')}
+              className="w-52 h-9"
+            />
+          )}
+
+          {showBoardInput && (
+            <AsyncCombobox
+              options={boardOptions}
+              value={boardId}
+              onChange={setBoardId}
+              loading={boardsLoading && !boards.length}
+              placeholder={t('report.board_id_placeholder', 'Select board...')}
+              searchPlaceholder="Search boards..."
+              emptyText={boardsLoading ? 'Loading boards...' : t('report.no_boards', 'No boards found')}
+              className="w-48 h-9"
+            />
+          )}
+
+          {showEpicInput && (
+            <AsyncCombobox
+              options={epicOptions}
+              value={epicKey}
+              onChange={setEpicKey}
+              onSearch={setEpicSearchQ}
+              loading={epicSearchLoading}
+              placeholder={t('report.epic_key_placeholder', 'Search epic...')}
+              searchPlaceholder="Type epic key or name..."
+              emptyText={epicSearchQ.length < 2 ? 'Type at least 2 characters' : t('report.no_epics', 'No epics found')}
+              className="w-56 h-9"
+            />
+          )}
         </div>
 
-        {showProjectInput && (
-          <AsyncCombobox
-            options={projectOptions}
-            value={projectKey}
-            onChange={setProjectKey}
-            loading={projectsLoading}
-            placeholder={t('report.project_key_placeholder', 'Select project...')}
-            searchPlaceholder="Search projects..."
-            emptyText={projectsLoading ? 'Loading projects...' : t('report.no_projects', 'No projects found')}
-            className="w-52 h-9"
-          />
-        )}
+        {/* Row 2: date range + options */}
+        <div className="flex flex-wrap items-end gap-2">
+          <p className="text-xs font-medium text-muted-foreground whitespace-nowrap self-center">Date range</p>
 
-        {showBoardInput && (
-          <AsyncCombobox
-            options={boardOptions}
-            value={boardId}
-            onChange={setBoardId}
-            loading={boardsLoading && !boards.length}
-            placeholder={t('report.board_id_placeholder', 'Select board...')}
-            searchPlaceholder="Search boards..."
-            emptyText={boardsLoading ? 'Loading boards...' : t('report.no_boards', 'No boards found')}
-            className="w-48 h-9"
-          />
-        )}
-
-        {showEpicInput && (
-          <AsyncCombobox
-            options={epicOptions}
-            value={epicKey}
-            onChange={setEpicKey}
-            onSearch={setEpicSearchQ}
-            loading={epicSearchLoading}
-            placeholder={t('report.epic_key_placeholder', 'Search epic...')}
-            searchPlaceholder="Type epic key or name..."
-            emptyText={epicSearchQ.length < 2 ? 'Type at least 2 characters' : t('report.no_epics', 'No epics found')}
-            className="w-56 h-9"
-          />
-        )}
-
-        <div className="flex items-end gap-2">
-          <div className="space-y-1">
-            <p className="px-1 text-[11px] font-medium text-muted-foreground">From</p>
-            <DatePicker
-              value={dateFrom}
-              onChange={setDateFromStable}
-              placeholder="Start date"
-              className="w-40"
-            />
-          </div>
-          <div className="space-y-1">
-            <p className="px-1 text-[11px] font-medium text-muted-foreground">To</p>
-            <DatePicker
-              value={dateTo}
-              onChange={setDateToStable}
-              placeholder="End date"
-              className="w-40"
-            />
-          </div>
-        </div>
-
-        <label className="flex h-9 items-center gap-2 rounded-md border px-3 text-xs">
-          <Switch
-            checked={mode === 'my' || onlyMyWorklogs}
-            disabled={mode === 'my'}
-            onCheckedChange={setOnlyMyWorklogs}
-            className="scale-75"
-          />
-          <span className="whitespace-nowrap">My worklogs only</span>
-        </label>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
-              <Layers className="h-3.5 w-3.5" />
-              Epic fields
-              {selectedCustomFields.length > 0 && (
-                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] leading-none text-primary-foreground">
-                  {selectedCustomFields.length}
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-80 p-2">
-            <div className="space-y-2">
-              <div>
-                <p className="text-sm font-medium">Epic custom fields</p>
-                <p className="text-xs text-muted-foreground">Choose fields to show on each epic.</p>
-              </div>
-              <Input
-                value={fieldSearch}
-                onChange={(event) => setFieldSearch(event.target.value)}
-                placeholder="Search Jira fields..."
-                className="h-8 text-sm"
+          <div className="flex items-end gap-1">
+            <div className="space-y-1">
+              <p className="px-1 text-[11px] text-muted-foreground">From</p>
+              <DatePicker
+                value={dateFrom}
+                onChange={setDateFromStable}
+                placeholder="Start date"
+                className="w-36"
               />
-              {selectedFieldObjects.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {selectedFieldObjects.map((field) => (
-                    <button
-                      key={field.id}
-                      type="button"
-                      onClick={() => toggleCustomField(field.id, false)}
-                      className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/15"
-                    >
-                      {field.name} ×
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="max-h-64 overflow-y-auto rounded-md border p-1">
-                {fieldsLoading && <p className="px-2 py-6 text-center text-sm text-muted-foreground">Loading fields...</p>}
-                {!fieldsLoading && filteredFields.length === 0 && (
-                  <p className="px-2 py-6 text-center text-sm text-muted-foreground">No fields found</p>
-                )}
-                {!fieldsLoading && filteredFields.map((field) => (
-                  <DropdownMenuCheckboxItem
-                    key={field.id}
-                    checked={selectedCustomFields.includes(field.id)}
-                    onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={(checked) => toggleCustomField(field.id, Boolean(checked))}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate">{field.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{field.id}</span>
-                    </span>
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </div>
             </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <span className="pb-2 text-muted-foreground">—</span>
+            <div className="space-y-1">
+              <p className="px-1 text-[11px] text-muted-foreground">To</p>
+              <DatePicker
+                value={dateTo}
+                onChange={setDateToStable}
+                placeholder="End date"
+                className="w-36"
+              />
+            </div>
+          </div>
 
-        {presets.map((p) => (
-          <Button key={p.label} variant="ghost" size="sm" className="text-xs h-8" onClick={p.apply}>
-            {p.label}
-          </Button>
-        ))}
+          <div className="flex items-center gap-1.5">
+            {presets.map((p) => (
+              <Button key={p.label} variant="outline" size="sm" className="text-xs h-9 gap-1" onClick={p.apply}>
+                <CalendarDays className="h-3.5 w-3.5" />
+                {p.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <label className="flex h-9 items-center gap-2 rounded-md border px-3 text-xs">
+              <Switch
+                checked={mode === 'my' || onlyMyWorklogs}
+                disabled={mode === 'my'}
+                onCheckedChange={setOnlyMyWorklogs}
+                className="scale-75"
+              />
+              <span className="whitespace-nowrap">My worklogs only</span>
+            </label>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
+                  <Layers className="h-3.5 w-3.5" />
+                  Epic fields
+                  {selectedCustomFields.length > 0 && (
+                    <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] leading-none text-primary-foreground">
+                      {selectedCustomFields.length}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 p-2">
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-sm font-medium">Epic custom fields</p>
+                    <p className="text-xs text-muted-foreground">Choose fields to show on each epic.</p>
+                  </div>
+                  <Input
+                    value={fieldSearch}
+                    onChange={(event) => setFieldSearch(event.target.value)}
+                    placeholder="Search Jira fields..."
+                    className="h-8 text-sm"
+                  />
+                  {selectedFieldObjects.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedFieldObjects.map((field) => (
+                        <button
+                          key={field.id}
+                          type="button"
+                          onClick={() => toggleCustomField(field.id, false)}
+                          className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/15"
+                        >
+                          {field.name} ×
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="max-h-64 overflow-y-auto rounded-md border p-1">
+                    {fieldsLoading && <p className="px-2 py-6 text-center text-sm text-muted-foreground">Loading fields...</p>}
+                    {!fieldsLoading && filteredFields.length === 0 && (
+                      <p className="px-2 py-6 text-center text-sm text-muted-foreground">No fields found</p>
+                    )}
+                    {!fieldsLoading && filteredFields.map((field) => (
+                      <DropdownMenuCheckboxItem
+                        key={field.id}
+                        checked={selectedCustomFields.includes(field.id)}
+                        onSelect={(event) => event.preventDefault()}
+                        onCheckedChange={(checked) => toggleCustomField(field.id, Boolean(checked))}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate">{field.name}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{field.id}</span>
+                        </span>
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
       </div>
 
       {rangeTooLarge && (
-        <Card className="border-amber-500/40 bg-amber-500/5">
-          <CardContent className="py-4">
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Date range cannot exceed 6 months. Narrow the range to keep Jira report generation fast and reliable.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>Date range cannot exceed 6 months. Narrow the range to keep Jira report generation fast and reliable.</p>
+        </div>
       )}
 
       {invalidDateOrder && (
-        <Card className="border-destructive/40 bg-destructive/5">
-          <CardContent className="py-4">
-            <p className="text-sm text-destructive">Start date must be before or equal to end date.</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+          <Calendar className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>Start date must be before or equal to end date.</p>
+        </div>
       )}
 
       {/* Loading */}
@@ -1032,51 +1105,67 @@ export function MonthlyReportTab() {
 
       {/* No filter yet */}
       {!isLoading && !error && !rangeTooLarge && !invalidDateOrder && !hasFilterValue && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12">
-            <Search className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {mode === 'project' ? t('report.enter_project_key', 'Enter a project key to generate report') :
-               mode === 'board' ? t('report.enter_board_id', 'Enter a board ID to generate report') :
-               mode === 'epic' ? t('report.enter_epic_key', 'Enter an epic key to view details') :
-               t('report.select_dates', 'Select a date range to generate a report')}
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <FileBarChart2 className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">
+              {mode === 'project' ? 'Select a project to generate report' :
+               mode === 'board' ? 'Select a board to generate report' :
+               mode === 'epic' ? 'Search an epic to view details' :
+               'Select a date range to generate a report'}
             </p>
-          </CardContent>
-        </Card>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use the filters above to get started
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Empty result */}
       {!isLoading && !rangeTooLarge && !invalidDateOrder && data && data.epics.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12">
-            <Layers className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {t('report.no_worklogs', 'No worklogs found for this period')}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Layers className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">{t('report.no_worklogs', 'No worklogs found')}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Try adjusting your date range or filters</p>
+          </div>
+        </div>
       )}
 
       {/* Results */}
       {!isLoading && !rangeTooLarge && !invalidDateOrder && data && data.epics.length > 0 && (
         <>
-          <div ref={resultsRef} className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {formatDate(data.startDate)} — {formatDate(data.endDate)}
-            </p>
-            <div className="flex items-center gap-2">
+          <div ref={resultsRef} className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium truncate max-w-[240px]">
+                <Calendar className="h-3 w-3 shrink-0" />
+                <span className="truncate">{formatDate(data.startDate)} — {formatDate(data.endDate)}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               <div className="flex rounded-md border p-0.5">
-                {(['cards', 'table'] as ReportViewMode[]).map((view) => (
-                  <Button
-                    key={view}
-                    variant={viewMode === view ? 'primary' : 'ghost'}
-                    size="sm"
-                    className="h-7 px-2.5 text-xs capitalize"
-                    onClick={() => setViewMode(view)}
-                  >
-                    {view}
-                  </Button>
-                ))}
+                <Button
+                  variant={viewMode === 'cards' ? 'primary' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-2.5 text-xs gap-1"
+                  onClick={() => setViewMode('cards')}
+                >
+                  <LayoutGrid className="h-3 w-3" />
+                  <span className="hidden sm:inline">Cards</span>
+                </Button>
+                <Button
+                  variant={viewMode === 'table' ? 'primary' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-2.5 text-xs gap-1"
+                  onClick={() => setViewMode('table')}
+                >
+                  <Table2 className="h-3 w-3" />
+                  <span className="hidden sm:inline">Table</span>
+                </Button>
               </div>
 
               <DropdownMenu>
@@ -1102,8 +1191,8 @@ export function MonthlyReportTab() {
               </DropdownMenu>
 
               <Button variant="outline" size="sm" className="gap-1.5" onClick={handleDownloadCsv}>
-                <Download className="h-4 w-4" />
-                CSV
+                <Download className="h-3.5 w-3.5" />
+                Export CSV
               </Button>
             </div>
           </div>

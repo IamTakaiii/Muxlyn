@@ -27,7 +27,7 @@ export function TimeSummary() {
   const routinePct = dailyHours > 0 ? Math.min(100, (routineHours / dailyHours) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 min-w-0">
       {/* Working Days */}
       <div className="rounded-lg border bg-card p-3 flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

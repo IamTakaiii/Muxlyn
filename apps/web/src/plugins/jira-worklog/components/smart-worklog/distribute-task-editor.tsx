@@ -50,8 +50,8 @@ export function DistributeTaskEditor() {
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
           <h3 className="flex items-center gap-1.5 text-sm font-medium">
             <PieChart size={14} className="text-muted-foreground" />
             {t('smartWorklog.distributeTasks')}
@@ -60,7 +60,7 @@ export function DistributeTaskEditor() {
             {t('smartWorklog.distributeTasks_desc')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Total badge */}
           {distributeTasks.length > 0 && (
             <span
@@ -85,7 +85,8 @@ export function DistributeTaskEditor() {
             disabled={distributeTasks.length >= MAX_TASKS}
           >
             <Plus size={14} className="mr-1" />
-            {t('smartWorklog.addDistributeTask')}
+            <span className="hidden sm:inline">{t('smartWorklog.addDistributeTask')}</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
@@ -149,14 +150,14 @@ export function DistributeTaskEditor() {
           {distributeTasks.map((task) => (
             <div
               key={task.id}
-              className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 text-sm"
+              className="flex flex-col gap-1.5 rounded-lg border bg-card px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-3"
             >
-              <span className="font-medium text-foreground shrink-0 w-24 truncate">
+              <span className="font-medium text-foreground shrink-0 sm:w-24 truncate">
                 {task.issueKey}
               </span>
 
               {/* Slider */}
-              <div className="flex-1 flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-2 min-w-0">
                 <input
                   type="range"
                   min={0}
@@ -168,10 +169,10 @@ export function DistributeTaskEditor() {
                       percentage: Number(e.target.value),
                     })
                   }
-                  className="flex-1 accent-blue-500 cursor-pointer"
+                  className="flex-1 min-w-0 accent-blue-500 cursor-pointer"
                 />
                 {/* Number input for direct edit */}
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-0.5 shrink-0">
                   <Input
                     type="number"
                     min={0}
@@ -192,7 +193,7 @@ export function DistributeTaskEditor() {
               <button
                 type="button"
                 onClick={() => removeDistributeTask(task.id)}
-                className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                className="shrink-0 self-end sm:self-auto text-muted-foreground hover:text-destructive transition-colors"
               >
                 <Trash2 size={14} />
               </button>

@@ -180,9 +180,9 @@ export default function MonthlyPlanner() {
   const currentStepIndex = PHASE_ORDER.indexOf(phase);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-semibold">
             <Sparkles size={18} className="text-muted-foreground" />
@@ -192,18 +192,20 @@ export default function MonthlyPlanner() {
             {t('smartWorklog.monthlyPlanner_desc')}
           </p>
         </div>
-        <MonthSelector />
+        <div className="shrink-0">
+          <MonthSelector />
+        </div>
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-1 text-xs">
+      <div className="flex items-center gap-1 text-xs overflow-x-auto pb-0.5">
         {STEPS.map((step, i) => {
           const isDone = i < currentStepIndex;
           const isCurrent = i === currentStepIndex;
           return (
-            <div key={step.key} className="flex items-center gap-1">
+            <div key={step.key} className="flex items-center gap-1 shrink-0">
               <div
-                className={`flex items-center gap-1 rounded-full px-2.5 py-1 font-medium transition-all ${
+                className={`flex items-center gap-1 rounded-full px-2 py-1 sm:px-2.5 font-medium transition-all ${
                   isCurrent
                     ? 'bg-primary text-primary-foreground'
                     : isDone
@@ -212,7 +214,7 @@ export default function MonthlyPlanner() {
                 }`}
               >
                 {isDone ? <CheckCircle2 size={12} /> : step.icon}
-                {step.label}
+                <span className="hidden sm:inline">{step.label}</span>
               </div>
               {i < STEPS.length - 1 && (
                 <ChevronRight

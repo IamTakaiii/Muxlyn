@@ -59,16 +59,17 @@ export function RoutineTaskEditor() {
             {t('smartWorklog.routineTasks_desc')}
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={() => setShowForm(!showForm)}>
+        <Button size="sm" variant="outline" onClick={() => setShowForm(!showForm)} className="shrink-0">
           <Plus size={14} className="mr-1" />
-          {t('smartWorklog.addRoutineTask')}
+          <span className="hidden sm:inline">{t('smartWorklog.addRoutineTask')}</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
       {/* Add form */}
       {showForm && (
-        <div className="flex flex-wrap items-end gap-2 rounded-lg border bg-muted/30 p-3">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+          <div className="relative w-full">
             <Input
               type="text"
               value={selectedIssue ? selectedIssue.key : searchQ}
@@ -101,17 +102,19 @@ export function RoutineTaskEditor() {
             )}
           </div>
 
-          <TimePicker value={startTime} onChange={setStartTime} />
-          <span className="pb-1.5 text-sm text-muted-foreground">–</span>
-          <TimePicker value={endTime} onChange={setEndTime} />
-
-          <Button
-            size="sm"
-            onClick={handleAdd}
-            disabled={(!selectedIssue && !searchQ.trim()) || startTime >= endTime}
-          >
-            {t('smartWorklog.addRoutineTask')}
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <TimePicker value={startTime} onChange={setStartTime} />
+            <span className="text-sm text-muted-foreground">–</span>
+            <TimePicker value={endTime} onChange={setEndTime} />
+            <Button
+              size="sm"
+              onClick={handleAdd}
+              disabled={(!selectedIssue && !searchQ.trim()) || startTime >= endTime}
+              className="ml-auto"
+            >
+              Add
+            </Button>
+          </div>
         </div>
       )}
 
