@@ -1,26 +1,43 @@
-import { Link } from '@tanstack/react-router';
-import { CalendarIcon, Clock, Pencil, Trash2, BarChart3, Copy, Loader2 } from 'lucide-react';
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { useServiceConnections } from '@/shared/api/service-connections';
+import { Link } from '@tanstack/react-router';
+import {
+  BarChart3,
+  CalendarIcon,
+  CalendarPlus,
+  Clock,
+  Copy,
+  Loader2,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
+import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useBulkCreateWorklogs } from '@/plugins/jira-worklog/api/bulk-worklog';
+import { useWorklogsByDateRange } from '@/plugins/jira-worklog/api/search';
+import { useUpdateWorklog } from '@/plugins/jira-worklog/api/worklog';
 import type { CalendarEvent } from '@/plugins/jira-worklog/components/calendar/full-calendar';
 import { FullCalendarWrapper } from '@/plugins/jira-worklog/components/calendar/full-calendar';
-import { ReportsPage } from '@/plugins/jira-worklog/pages/reports';
 import { CalendarCreateDialog } from '@/plugins/jira-worklog/components/calendar-create-dialog';
-import { WorklogEditDialog } from '@/plugins/jira-worklog/components/worklog-edit-dialog';
 import { WorklogDeleteDialog } from '@/plugins/jira-worklog/components/worklog-delete-dialog';
-import { useUpdateWorklog } from '@/plugins/jira-worklog/api/worklog';
-import { useWorklogsByDateRange } from '@/plugins/jira-worklog/api/search';
-import { useBulkCreateWorklogs } from '@/plugins/jira-worklog/api/bulk-worklog';
+import { WorklogEditDialog } from '@/plugins/jira-worklog/components/worklog-edit-dialog';
+import { ReportsPage } from '@/plugins/jira-worklog/pages/reports';
+import { useServiceConnections } from '@/shared/api/service-connections';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { cn, formatHours } from '@/shared/lib/utils';
 
+const SmartWorklogPage = lazy(() => import('./smart-worklog/monthly-planner'));
+
 const EVENT_COLORS = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
-  '#10b981', '#3b82f6', '#ef4444', '#14b8a6',
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#3b82f6',
+  '#ef4444',
+  '#14b8a6',
 ];
 
 function colorForKey(key: string): string {
@@ -116,7 +133,9 @@ export default function CalendarPage() {
 
   // context menu
   const [contextMenu, setContextMenu] = useState<{
-    x: number; y: number; event: CalendarEvent;
+    x: number;
+    y: number;
+    event: CalendarEvent;
   } | null>(null);
   useEffect(() => {
     if (!contextMenu) return;
@@ -128,12 +147,8 @@ export default function CalendarPage() {
   const calendarEvents = useMemo<CalendarEvent[]>(
     () =>
       worklogItems.map((wl) => {
-        const start = wl.started.includes('T')
-          ? wl.started
-          : `${wl.date}T00:00:00`;
-        const end = new Date(
-          new Date(start).getTime() + wl.timeSpentSeconds * 1000,
-        ).toISOString();
+        const start = wl.started.includes('T') ? wl.started : `${wl.date}T00:00:00`;
+        const end = new Date(new Date(start).getTime() + wl.timeSpentSeconds * 1000).toISOString();
         return {
           id: wl.worklogId,
           title: `${wl.issueKey}: ${wl.issueSummary} · ${formatHours(wl.hours)}`,
@@ -165,9 +180,7 @@ export default function CalendarPage() {
   }, [worklogItems]);
 
   const handleDatesSet = useCallback((from: string, to: string) => {
-    setCalendarRange((prev) =>
-      prev?.from === from && prev?.to === to ? prev : { from, to },
-    );
+    setCalendarRange((prev) => (prev?.from === from && prev?.to === to ? prev : { from, to }));
   }, []);
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
@@ -254,46 +267,54 @@ export default function CalendarPage() {
       const durationSeconds = Math.round(e.extendedProps.hours * 3600);
       const started = formatJiraDateTime(e.start);
 
-      bulkCreateMutation.mutate([{
-        issueId: e.extendedProps.issueId,
-        date: eventDate,
-        durationSeconds,
-        comment: e.extendedProps.comment,
-        started,
-      }], {
-        onSuccess: (res) => {
-          if (res.success && res.data) {
-            if (res.data.succeeded > 0) {
-              window.dispatchEvent(
-                new CustomEvent('toast:show', {
-                  detail: { message: 'Worklog duplicated successfully', variant: 'success' },
-                }),
-              );
-              invalidateCalendar();
+      bulkCreateMutation.mutate(
+        [
+          {
+            issueId: e.extendedProps.issueId,
+            date: eventDate,
+            durationSeconds,
+            comment: e.extendedProps.comment,
+            started,
+          },
+        ],
+        {
+          onSuccess: (res) => {
+            if (res.success && res.data) {
+              if (res.data.succeeded > 0) {
+                window.dispatchEvent(
+                  new CustomEvent('toast:show', {
+                    detail: { message: 'Worklog duplicated successfully', variant: 'success' },
+                  }),
+                );
+                invalidateCalendar();
+              } else {
+                const err = res.data.results[0]?.error ?? 'Unknown error';
+                window.dispatchEvent(
+                  new CustomEvent('toast:show', {
+                    detail: { message: `Failed to duplicate: ${err}`, variant: 'error' },
+                  }),
+                );
+              }
             } else {
-              const err = res.data.results[0]?.error ?? 'Unknown error';
               window.dispatchEvent(
                 new CustomEvent('toast:show', {
-                  detail: { message: `Failed to duplicate: ${err}`, variant: 'error' },
+                  detail: { message: res.message || 'Failed to duplicate', variant: 'error' },
                 }),
               );
             }
-          } else {
+          },
+          onError: (err) => {
             window.dispatchEvent(
               new CustomEvent('toast:show', {
-                detail: { message: res.message || 'Failed to duplicate', variant: 'error' },
+                detail: {
+                  message: err instanceof Error ? err.message : 'Network error',
+                  variant: 'error',
+                },
               }),
             );
-          }
+          },
         },
-        onError: (err) => {
-          window.dispatchEvent(
-            new CustomEvent('toast:show', {
-              detail: { message: err instanceof Error ? err.message : 'Network error', variant: 'error' },
-            }),
-          );
-        }
-      });
+      );
       setContextMenu(null);
     }
   }, [contextMenu, bulkCreateMutation, invalidateCalendar]);
@@ -375,36 +396,50 @@ export default function CalendarPage() {
             <BarChart3 className="h-4 w-4" />
             {t('report.title', 'Reports')}
           </TabsTrigger>
+          <TabsTrigger value="smart-worklog" className="gap-1.5">
+            <CalendarPlus className="h-4 w-4" />
+            {t('smartWorklog.monthlyPlanner')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-6 outline-none">
           {hasActiveConnection && viewInterval && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card className={cn(
-                "shadow-sm relative overflow-hidden",
-                totalLoggedHours < targetHours
-                  ? "bg-gradient-to-br from-destructive/5 to-destructive/10 border-destructive/20"
-                  : "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
-              )}>
+              <Card
+                className={cn(
+                  'shadow-sm relative overflow-hidden',
+                  totalLoggedHours < targetHours
+                    ? 'bg-gradient-to-br from-destructive/5 to-destructive/10 border-destructive/20'
+                    : 'bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20',
+                )}
+              >
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
-                    <p className={cn(
-                      "text-xs font-semibold uppercase tracking-wider",
-                      totalLoggedHours < targetHours ? "text-destructive/80" : "text-muted-foreground"
-                    )}>
+                    <p
+                      className={cn(
+                        'text-xs font-semibold uppercase tracking-wider',
+                        totalLoggedHours < targetHours
+                          ? 'text-destructive/80'
+                          : 'text-muted-foreground',
+                      )}
+                    >
                       {t('calendar.logged_hours')}
                     </p>
-                    <h3 className={cn(
-                      "text-2xl font-bold mt-1",
-                      totalLoggedHours < targetHours ? "text-destructive" : "text-primary"
-                    )}>
+                    <h3
+                      className={cn(
+                        'text-2xl font-bold mt-1',
+                        totalLoggedHours < targetHours ? 'text-destructive' : 'text-primary',
+                      )}
+                    >
                       {formatHours(totalLoggedHours)}
                     </h3>
                   </div>
-                  <Clock className={cn(
-                    "h-8 w-8",
-                    totalLoggedHours < targetHours ? "text-destructive/30" : "text-primary/30"
-                  )} />
+                  <Clock
+                    className={cn(
+                      'h-8 w-8',
+                      totalLoggedHours < targetHours ? 'text-destructive/30' : 'text-primary/30',
+                    )}
+                  />
                 </CardContent>
               </Card>
 
@@ -414,9 +449,7 @@ export default function CalendarPage() {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {t('calendar.target_hours')}
                     </p>
-                    <h3 className="text-2xl font-bold mt-1">
-                      {formatHours(targetHours)}
-                    </h3>
+                    <h3 className="text-2xl font-bold mt-1">{formatHours(targetHours)}</h3>
                   </div>
                   <CalendarIcon className="h-8 w-8 text-muted-foreground/30" />
                 </CardContent>
@@ -445,7 +478,9 @@ export default function CalendarPage() {
               {bulkCreateMutation.isPending && (
                 <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-50 flex flex-col items-center justify-center gap-2 rounded-md">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm font-medium text-muted-foreground">Duplicating worklog...</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Duplicating worklog...
+                  </p>
                 </div>
               )}
               <FullCalendarWrapper
@@ -465,6 +500,10 @@ export default function CalendarPage() {
 
         <TabsContent value="reports">
           <ReportsPage />
+        </TabsContent>
+
+        <TabsContent value="smart-worklog">
+          <SmartWorklogPage />
         </TabsContent>
       </Tabs>
 
@@ -518,14 +557,18 @@ export default function CalendarPage() {
               {contextMenu.event.extendedProps.issueSummary}
             </div>
             <div className="truncate">
-              {contextMenu.event.extendedProps.issueKey} · {formatHours(contextMenu.event.extendedProps.hours)}
+              {contextMenu.event.extendedProps.issueKey} ·{' '}
+              {formatHours(contextMenu.event.extendedProps.hours)}
             </div>
             {contextMenu.event.extendedProps.author && (
-              <div className="truncate text-muted-foreground/60">{contextMenu.event.extendedProps.author}</div>
+              <div className="truncate text-muted-foreground/60">
+                {contextMenu.event.extendedProps.author}
+              </div>
             )}
           </div>
           <div className="h-px bg-border my-1" />
           <button
+            type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
             onClick={handleContextEdit}
           >
@@ -533,6 +576,7 @@ export default function CalendarPage() {
             Edit
           </button>
           <button
+            type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
             onClick={handleContextDuplicate}
           >
@@ -540,6 +584,7 @@ export default function CalendarPage() {
             Duplicate
           </button>
           <button
+            type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent"
             onClick={handleContextDelete}
           >

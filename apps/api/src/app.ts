@@ -8,6 +8,7 @@ import { jiraRoutes } from './modules/jira/jira-routes';
 import { serviceConnectionsRoutes } from './modules/service-connections';
 import { serviceAdvancedRoutes } from './modules/service-connections/service-advanced-routes';
 import { serviceGroupsRoutes } from './modules/service-groups/service-groups-routes';
+import { smartWorklogRoutes } from './modules/smart-worklog';
 import { workflowRoutes } from './modules/workflows/workflow-routes';
 import { bulkWorklogRoutes, reportRoutes, worklogRoutes } from './modules/worklog';
 import { authHandler } from './shared/auth/handler';
@@ -38,10 +39,24 @@ export const app = new Elysia()
             description: 'Built-in auth endpoints (OAuth, email/password, sessions)',
           },
           { name: 'Jira', description: 'Jira account connection management' },
-          { name: 'Service Connections', description: 'Generalized external service connection management' },
+          {
+            name: 'Service Connections',
+            description: 'Generalized external service connection management',
+          },
           { name: 'Service Groups', description: 'Service group management' },
-          { name: 'Workflows', description: 'Workflow engine — design, run, and monitor workflows' },
-          { name: 'Worklogs', description: 'Jira worklog management — bulk create, edit, and delete' },
+          {
+            name: 'Workflows',
+            description: 'Workflow engine — design, run, and monitor workflows',
+          },
+          {
+            name: 'Worklogs',
+            description: 'Jira worklog management — bulk create, edit, and delete',
+          },
+          {
+            name: 'Smart Worklog',
+            description:
+              'Monthly planner with routine tasks, distribute tasks, and automated worklog creation',
+          },
           { name: 'Reports', description: 'Epic & monthly worklog reports with CSV export' },
           { name: 'Health', description: 'Health check' },
         ],
@@ -63,6 +78,7 @@ export const app = new Elysia()
   .use(bulkWorklogRoutes)
   .use(reportRoutes)
   .use(worklogRoutes)
+  .use(smartWorklogRoutes)
   .use(healthModule)
   .all('*', ({ set }) => {
     set.status = 404;

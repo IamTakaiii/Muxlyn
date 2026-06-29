@@ -3,7 +3,20 @@ import { logger } from '../logger';
 import { AppError, InternalError } from './index';
 
 export const errorMiddleware = new Elysia()
-  .onError(({ error, set }) => {
+  .onError(({ code, error, set }) => {
+    if (code === 'VALIDATION') {
+      const validationError = error as Error & Record<string, unknown>;
+      set.status = 422;
+      return {
+        success: false,
+        message: validationError.message || 'Validation failed.',
+        error: {
+          code: 'VALIDATION',
+          details: validationError,
+        },
+      };
+    }
+
     if (error instanceof AppError) {
       set.status = error.statusCode;
       return {
