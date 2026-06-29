@@ -1,24 +1,37 @@
+x-api-environment: &api-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:-muxlyn}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-muxlyn}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
+  FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
+  CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY is required}
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  PORT: 3000
+  NODE_ENV: production
+
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ['bun', 'run', 'apps/api/src/data/migrate.ts']
+    environment: *api-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-muxlyn}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-muxlyn}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
-      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
-      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY is required}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      PORT: 3000
-      NODE_ENV: production
+    environment: *api-environment
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     expose:
       - '3000'
     restart: unless-stopped
