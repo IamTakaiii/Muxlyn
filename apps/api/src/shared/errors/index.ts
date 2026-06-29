@@ -22,6 +22,12 @@ export class SessionExpiredError extends AppError {
   }
 }
 
+export class IpChangedError extends AppError {
+  constructor(message = 'IP address has changed') {
+    super(message, 401, 'IP_CHANGED');
+  }
+}
+
 export class OAuthError extends AppError {
   constructor(message = 'Google authentication failed') {
     super(message, 502, 'OAUTH_ERROR');
@@ -49,5 +55,35 @@ export class ServiceUnavailableError extends AppError {
 export class InternalError extends AppError {
   constructor(message = 'Unexpected error') {
     super(message, 500, 'INTERNAL_ERROR');
+  }
+}
+
+export class JiraInvalidTokenError extends AppError {
+  constructor(message = 'Invalid API token. Please generate a new one from Jira.') {
+    super(message, 400, 'INVALID_TOKEN');
+  }
+}
+
+export class JiraNoPermissionError extends AppError {
+  constructor(message = 'API token lacks required permissions.') {
+    super(message, 400, 'NO_PERMISSION');
+  }
+}
+
+export class JiraNetworkError extends AppError {
+  constructor(message = 'Cannot connect to Jira. Please check the URL and try again.') {
+    super(message, 400, 'NETWORK_ERROR');
+  }
+}
+
+export class JiraInvalidUrlError extends AppError {
+  constructor(message = 'Invalid Jira URL. Must start with https://') {
+    super(message, 400, 'INVALID_URL');
+  }
+}
+
+export class JiraDuplicateError extends AppError {
+  constructor(message = 'This Jira account is already connected.') {
+    super(message, 409, 'DUPLICATE');
   }
 }

@@ -1,0 +1,288 @@
+import type {
+  DateSelectArg,
+  DatesSetArg,
+  EventChangeArg,
+  EventClickArg,
+  EventDropArg,
+} from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import FullCalendar from '@fullcalendar/react';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import thLocale from '@fullcalendar/core/locales/th';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/shared/components/ui/button';
+import { cn, formatHours } from '@/shared/lib/utils';
+
+type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay';
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end?: string;
+  backgroundColor: string;
+  borderColor?: string;
+  textColor?: string;
+  extendedProps: {
+    worklogId: string;
+    issueId: string;
+    issueKey: string;
+    issueSummary: string;
+    hours: number;
+    author?: string;
+    comment?: string;
+    type: 'manual' | 'preset' | 'auto';
+  };
+}
+
+interface FullCalendarWrapperProps {
+  events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
+  onEventContextMenu?: (event: CalendarEvent, clientX: number, clientY: number) => void;
+  onDateSelect: (date: string) => void;
+  onEventDrop: (worklogId: string, newDate: string, newHours?: number) => void;
+  onDatesSet?: (dateFrom: string, dateTo: string) => void;
+  onDatesIntervalChange?: (start: Date, end: Date) => void;
+  dayCellClasses?: (date: string) => string[];
+  disabled?: boolean;
+}
+
+const STORAGE_KEY = 'muxlyn-calendar-view';
+
+function getStoredView(): CalendarView {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === 'dayGridMonth' || stored === 'timeGridWeek' || stored === 'timeGridDay') {
+      return stored;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 'dayGridMonth';
+}
+
+export function FullCalendarWrapper({
+  events,
+  onEventClick,
+  onEventContextMenu,
+  onDateSelect,
+  onEventDrop,
+  onDatesSet,
+  onDatesIntervalChange,
+  dayCellClasses,
+  disabled,
+}: FullCalendarWrapperProps) {
+  const { t, i18n } = useTranslation();
+  const [currentView, setCurrentView] = useState<CalendarView>(getStoredView);
+  const [title, setTitle] = useState('');
+  const calendarRef = useRef<FullCalendar>(null);
+
+  const handleViewChange = useCallback((view: CalendarView) => {
+    setCurrentView(view);
+    localStorage.setItem(STORAGE_KEY, view);
+    calendarRef.current?.getApi().changeView(view);
+  }, []);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      calendarRef.current?.getApi().updateSize();
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const root = containerRef.current?.querySelector('.fc');
+    if (!root) return;
+    const HIGHLIGHT_CLASSES = ['fc-day-complete', 'fc-day-incomplete'];
+    const cells = root.querySelectorAll<HTMLElement>(
+      'td.fc-daygrid-day[data-date], td.fc-timegrid-col[data-date]',
+    );
+    cells.forEach((cell) => {
+      const date = cell.dataset.date;
+      if (!date) return;
+      cell.classList.remove(...HIGHLIGHT_CLASSES);
+      if (cell.classList.contains('fc-day-other')) {
+        return;
+      }
+      const classes = dayCellClasses?.(date) ?? [];
+      if (classes.length > 0) cell.classList.add(...classes);
+    });
+  }, [dayCellClasses, events]);
+
+  const handleToday = useCallback(() => {
+    calendarRef.current?.getApi().today();
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    calendarRef.current?.getApi().prev();
+  }, []);
+
+  const handleNext = useCallback(() => {
+    calendarRef.current?.getApi().next();
+  }, []);
+
+  const viewLabel: Record<CalendarView, string> = {
+    dayGridMonth: t('common.month'),
+    timeGridWeek: t('common.week'),
+    timeGridDay: t('common.day'),
+  };
+
+  return (
+    <div className={cn("fc-custom space-y-3 overflow-x-auto", disabled && "opacity-50 pointer-events-none select-none")}>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon-sm" onClick={handlePrev}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold min-w-[180px] text-center select-none">
+            {title}
+          </h2>
+          <Button variant="outline" size="icon-sm" onClick={handleNext}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleToday} className="text-xs">
+            {t('common.today')}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-1 rounded-md border p-0.5">
+          {(Object.entries(viewLabel) as [CalendarView, string][]).map(([view, label]) => (
+            <Button
+              key={view}
+              variant={currentView === view ? 'primary' : 'ghost'}
+              size="sm"
+              className="text-xs h-7 px-2.5"
+              onClick={() => handleViewChange(view)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Calendar */}
+      <div ref={containerRef}>
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView={currentView}
+          events={events}
+          headerToolbar={false}
+          height="auto"
+          expandRows={true}
+          fixedWeekCount={false}
+          editable
+          selectable
+          firstDay={0}
+          locales={[thLocale]}
+          locale={i18n.language === 'th' ? 'th' : 'en'}
+          eventDurationEditable={false}
+          eventClick={(arg: EventClickArg) => {
+            const event = arg.event;
+            onEventClick({
+              id: event.id,
+              title: event.title,
+              start: event.startStr,
+              end: event.endStr,
+              backgroundColor: event.backgroundColor,
+              extendedProps: event.extendedProps as CalendarEvent['extendedProps'],
+            });
+          }}
+          select={(arg: DateSelectArg) => {
+            onDateSelect(arg.startStr);
+            calendarRef.current?.getApi().unselect();
+          }}
+          dateClick={(arg) => {
+            onDateSelect(arg.dateStr);
+          }}
+          eventDrop={(arg: EventDropArg) => {
+            const { worklogId } = arg.event.extendedProps as CalendarEvent['extendedProps'];
+            onEventDrop(worklogId, arg.event.startStr);
+          }}
+          eventResize={(arg: EventChangeArg) => {
+            const { worklogId } = arg.event.extendedProps as CalendarEvent['extendedProps'];
+            const hours = arg.event.end
+              ? (arg.event.end.getTime() - (arg.event.start?.getTime() ?? 0)) / 3600000
+              : 0;
+            onEventDrop(worklogId, arg.event.startStr, hours);
+          }}
+          datesSet={(arg: DatesSetArg) => {
+            const from = arg.startStr.slice(0, 10);
+            const to = arg.endStr.slice(0, 10);
+            onDatesSet?.(from, to);
+
+            const api = arg.view.calendar;
+            const date = api.getDate();
+            const viewType = arg.view.type;
+
+            onDatesIntervalChange?.(arg.view.currentStart, arg.view.currentEnd);
+
+            if (viewType === 'dayGridMonth') {
+              setTitle(date.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' }));
+            } else if (viewType === 'timeGridWeek') {
+              const end = new Date(date);
+              end.setDate(end.getDate() + 6);
+              const startStr = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
+              const endStr = end.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
+              setTitle(`${startStr} – ${endStr}`);
+            } else {
+              setTitle(date.toLocaleDateString(i18n.language, { month: 'long', day: 'numeric', year: 'numeric' }));
+            }
+          }}
+          dayMaxEventRows={4}
+          moreLinkClick={(arg) => {
+            if (currentView === 'dayGridMonth') {
+              handleViewChange('timeGridDay');
+              calendarRef.current?.getApi().gotoDate(arg.date);
+            }
+          }}
+          eventDidMount={(arg) => {
+            if (onEventContextMenu) {
+              arg.el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const event: CalendarEvent = {
+                  id: arg.event.id,
+                  title: arg.event.title,
+                  start: arg.event.startStr,
+                  end: arg.event.endStr,
+                  backgroundColor: arg.event.backgroundColor,
+                  extendedProps: arg.event.extendedProps as CalendarEvent['extendedProps'],
+                };
+                onEventContextMenu(event, (e as MouseEvent).clientX, (e as MouseEvent).clientY);
+              });
+            }
+          }}
+          eventContent={(arg) => {
+            const p = arg.event.extendedProps;
+            const tooltip = [
+              `${p.issueKey}: ${p.issueSummary}`,
+              `${formatHours(p.hours)}`,
+              p.author ? `By: ${p.author}` : '',
+              p.comment || '',
+            ]
+              .filter(Boolean)
+              .join('\n');
+            return (
+              <div title={tooltip} className="overflow-hidden">
+                <div className="truncate font-medium">{p.issueSummary}</div>
+                <div className="truncate opacity-75 text-[10px]">
+                  {p.issueKey} · {formatHours(p.hours)}
+                </div>
+              </div>
+            );
+          }}
+        />
+      </div>
+    </div>
+  );
+}

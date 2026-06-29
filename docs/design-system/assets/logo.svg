@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 32" fill="none">
+  <!-- Muxlyn Logo — Geometric M + Wordmark -->
+
+  <!-- M: two overlapping chevron-like polygons -->
+  <polygon points="0,24 0,2 7,13 10,2 10,13 17,24 17,14 10,6 7,14 5,8 5,24" fill="url(#g-m)" />
+
+  <text x="26" y="24" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-weight="700" font-size="20" letter-spacing="-0.02em" fill="#1c1917">Muxlyn</text>
+
+  <defs>
+    <linearGradient id="g-m" x1="0" y1="2" x2="17" y2="24">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+  </defs>
+</svg>
