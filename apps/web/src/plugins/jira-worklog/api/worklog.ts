@@ -54,21 +54,20 @@ export function useCreateWorklog() {
   });
 }
 
-export function useUpdateWorklog() {
+export function useUpdateWorklog(options: { invalidateOnSuccess?: boolean } = {}) {
   const qc = useQueryClient();
+  const { invalidateOnSuccess = true } = options;
 
   return useMutation({
-    mutationFn: ({
-      worklogId,
-      issueId,
-      ...body
-    }: UpdateWorklogInput) =>
+    mutationFn: ({ worklogId, issueId, ...body }: UpdateWorklogInput) =>
       api.put<{ worklogId: string; issueId: string; hours: number }>(
         `/api/worklogs/${worklogId}?issueId=${encodeURIComponent(issueId)}`,
         body,
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['worklogs'], exact: false });
+      if (invalidateOnSuccess) {
+        qc.invalidateQueries({ queryKey: ['worklogs'], exact: false });
+      }
     },
   });
 }
@@ -77,16 +76,8 @@ export function useDeleteWorklog() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      worklogId,
-      issueId,
-    }: {
-      worklogId: string;
-      issueId: string;
-    }) =>
-      api.delete(
-        `/api/worklogs/${worklogId}?issueId=${encodeURIComponent(issueId)}`,
-      ),
+    mutationFn: ({ worklogId, issueId }: { worklogId: string; issueId: string }) =>
+      api.delete(`/api/worklogs/${worklogId}?issueId=${encodeURIComponent(issueId)}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['worklogs', 'calendar'], exact: false });
       qc.invalidateQueries({ queryKey: ['worklogs', 'search'], exact: false });

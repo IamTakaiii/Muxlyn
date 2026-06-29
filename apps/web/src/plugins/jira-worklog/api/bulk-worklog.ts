@@ -64,14 +64,17 @@ export interface BulkDeleteResult {
   results: BulkResultItem[];
 }
 
-export function useBulkCreateWorklogs() {
+export function useBulkCreateWorklogs(options: { invalidateOnSuccess?: boolean } = {}) {
   const qc = useQueryClient();
+  const { invalidateOnSuccess = true } = options;
 
   return useMutation({
     mutationFn: (entries: BulkCreateEntry[]) =>
       api.post<BulkCreateResult>('/api/bulk/worklogs', { entries }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['worklogs'], exact: false });
+      if (invalidateOnSuccess) {
+        qc.invalidateQueries({ queryKey: ['worklogs'], exact: false });
+      }
     },
   });
 }
@@ -80,13 +83,8 @@ export function useBulkEditWorklogs() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      entries,
-      updates,
-    }: {
-      entries: BulkEditEntry[];
-      updates: BulkEditUpdates;
-    }) => api.put<BulkEditResult>('/api/bulk/worklogs', { entries, updates }),
+    mutationFn: ({ entries, updates }: { entries: BulkEditEntry[]; updates: BulkEditUpdates }) =>
+      api.put<BulkEditResult>('/api/bulk/worklogs', { entries, updates }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['worklogs'], exact: false });
     },

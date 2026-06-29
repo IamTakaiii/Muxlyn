@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
 import { Calendar, Clock, Loader2, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
+import { DatePicker } from '@/shared/components/ui/date-picker';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { DatePicker } from '@/shared/components/ui/date-picker';
-import { TimePicker } from '@/shared/components/ui/time-picker';
 import {
   Dialog,
   DialogContent,
@@ -14,11 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/modal';
-import {
-  useWorklog,
-  useUpdateWorklog,
-  useIssueInfo,
-} from '../api/worklog';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { TimePicker } from '@/shared/components/ui/time-picker';
+import { useIssueInfo, useUpdateWorklog, useWorklog } from '../api/worklog';
 
 interface WorklogEditDialogProps {
   worklogId: string;
@@ -48,6 +44,7 @@ export function WorklogEditDialog({
   const [minutes, setMinutes] = useState(0);
   const [comment, setComment] = useState('');
   const [initialized, setInitialized] = useState(false);
+  const updateMutation = useUpdateWorklog({ invalidateOnSuccess: false });
 
   useEffect(() => {
     if (worklog && !initialized) {
@@ -70,9 +67,7 @@ export function WorklogEditDialog({
       setInitialized(false);
       updateMutation.reset();
     }
-  }, [open]);
-
-  const updateMutation = useUpdateWorklog();
+  }, [open, updateMutation.reset]);
 
   const handleSubmit = () => {
     if (hours <= 0 && minutes <= 0) return;
@@ -119,13 +114,13 @@ export function WorklogEditDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[400px] gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-base font-semibold">
-            {t('worklog.edit_worklog')}
-          </DialogTitle>
+          <DialogTitle className="text-base font-semibold">{t('worklog.edit_worklog')}</DialogTitle>
           <DialogDescription className="text-xs leading-normal pt-1 w-full overflow-hidden">
             {issue ? (
               <span className="grid grid-cols-[auto_1fr] gap-1.5 items-baseline min-w-0">
-                <span className="font-mono font-medium text-foreground/80 whitespace-nowrap">{issue.key}</span>
+                <span className="font-mono font-medium text-foreground/80 whitespace-nowrap">
+                  {issue.key}
+                </span>
                 <span className="truncate">{issue.summary}</span>
               </span>
             ) : (
@@ -149,11 +144,7 @@ export function WorklogEditDialog({
                 {t('worklog.date_start')}
               </Label>
               <div className="flex flex-col sm:flex-row gap-2">
-                <DatePicker
-                  value={date}
-                  onChange={setDate}
-                  className="w-full sm:flex-1"
-                />
+                <DatePicker value={date} onChange={setDate} className="w-full sm:flex-1" />
                 <TimePicker
                   value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
                   onChange={(timeVal) => {
@@ -179,10 +170,14 @@ export function WorklogEditDialog({
                     max={24}
                     value={hours || ''}
                     placeholder="0"
-                    onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
+                    onChange={(e) =>
+                      setHours(Math.max(0, Math.min(24, parseInt(e.target.value, 10) || 0)))
+                    }
                     className="h-9 text-center text-sm"
                   />
-                  <span className="text-sm text-muted-foreground font-medium">{t('worklog.hours')}</span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {t('worklog.hours')}
+                  </span>
                 </div>
                 <div className="flex-1 flex items-center gap-1.5">
                   <Input
@@ -191,7 +186,9 @@ export function WorklogEditDialog({
                     max={59}
                     value={minutes || ''}
                     placeholder="0"
-                    onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                    onChange={(e) =>
+                      setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))
+                    }
                     className="h-9 text-center text-sm"
                   />
                   <span className="text-sm text-muted-foreground font-medium">m</span>
@@ -251,9 +248,7 @@ export function WorklogEditDialog({
                 onClick={handleSubmit}
                 disabled={updateMutation.isPending || (hours <= 0 && minutes <= 0)}
               >
-                {updateMutation.isPending && (
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                )}
+                {updateMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
                 {updateMutation.isPending ? t('worklog.saving') : t('worklog.save_changes')}
               </Button>
             </div>

@@ -1,5 +1,5 @@
-import { Calendar, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Calendar, CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
@@ -82,7 +82,7 @@ export function CalendarCreateDialog({
   const [comment, setComment] = useState('');
   const [result, setResult] = useState<BulkCreateResult | null>(null);
 
-  const createMutation = useBulkCreateWorklogs();
+  const createMutation = useBulkCreateWorklogs({ invalidateOnSuccess: false });
   const isLoading = createMutation.isPending;
 
   const dayCount = useMemo(() => {
@@ -190,9 +190,9 @@ export function CalendarCreateDialog({
             </p>
             {result.results.length > 0 && (
               <div className="max-h-40 overflow-y-auto space-y-1 rounded-md border p-3">
-                {result.results.map((r, i) => (
+                {result.results.map((r) => (
                   <div
-                    key={i}
+                    key={`${r.issueId}-${r.status}-${r.worklogId ?? r.error ?? ''}`}
                     className={cn(
                       'flex items-center gap-2 rounded px-2 py-1 text-sm',
                       r.status === 'success'
@@ -382,10 +382,7 @@ export function CalendarCreateDialog({
                   size="sm"
                   onClick={handleSubmit}
                   disabled={
-                    isLoading ||
-                    (hours === 0 && minutes === 0) ||
-                    dayCount === 0 ||
-                    !selectedIssue
+                    isLoading || (hours === 0 && minutes === 0) || dayCount === 0 || !selectedIssue
                   }
                 >
                   {createMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}

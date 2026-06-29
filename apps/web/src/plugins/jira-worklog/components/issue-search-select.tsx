@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Search, Loader2 } from 'lucide-react';
-import { Input } from '@/shared/components/ui/input';
+import { Loader2, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/shared/components/ui/badge';
+import { Input } from '@/shared/components/ui/input';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { useIssueSearch } from '../api/search';
 
@@ -14,25 +14,40 @@ interface IssueSearchSelectProps {
 
 function getStatusBadgeClass(status: string): string {
   const s = status.toLowerCase();
-  if (s.includes('done') || s.includes('resolved') || s.includes('closed') || s.includes('complete')) {
+  if (
+    s.includes('done') ||
+    s.includes('resolved') ||
+    s.includes('closed') ||
+    s.includes('complete')
+  ) {
     return 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800';
   }
-  if (s.includes('progress') || s.includes('review') || s.includes('active') || s.includes('test')) {
+  if (
+    s.includes('progress') ||
+    s.includes('review') ||
+    s.includes('active') ||
+    s.includes('test')
+  ) {
     return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800';
   }
   return 'bg-muted/50 text-muted-foreground border-muted-foreground/20';
 }
 
-export function IssueSearchSelect({ value, onChange, placeholder, className }: IssueSearchSelectProps) {
+export function IssueSearchSelect({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: IssueSearchSelectProps) {
   const [searchQ, setSearchQ] = useState(value ? `${value.key} • ${value.summary}` : '');
   const [isFocused, setIsFocused] = useState(false);
   const debouncedSearchQ = useDebounce(searchQ, 300);
 
   const isSelectedText = value && searchQ === `${value.key} • ${value.summary}`;
-  const searchQuery = isSelectedText ? '' : searchQ;
+  const searchQuery = isSelectedText ? '' : debouncedSearchQ;
 
   const { data: issueResult, isLoading } = useIssueSearch(
-    isFocused || searchQuery.length > 0 ? { freeText: searchQuery, pageSize: 15 } : null
+    isFocused || searchQuery.length > 0 ? { freeText: searchQuery, pageSize: 15 } : null,
   );
 
   useEffect(() => {

@@ -88,8 +88,8 @@ export default function CalendarPage() {
 
   const worklogItems = hasActiveConnection ? rawWorklogItems : [];
 
-  const updateMutation = useUpdateWorklog();
-  const bulkCreateMutation = useBulkCreateWorklogs();
+  const updateMutation = useUpdateWorklog({ invalidateOnSuccess: false });
+  const bulkCreateMutation = useBulkCreateWorklogs({ invalidateOnSuccess: false });
 
   const { totalLoggedHours, targetHours, workingDays } = useMemo(() => {
     if (!viewInterval) return { totalLoggedHours: 0, targetHours: 0, workingDays: 0 };
