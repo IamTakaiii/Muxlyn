@@ -177,8 +177,37 @@ function buildJql(filters: WorklogSearchFilters): string {
   if (filters.dateFrom) {
     parts.push(`worklogDate >= "${filters.dateFrom}"`);
   }
-  if (filters.dateTo) {
-    parts.push(`worklogDate <= "${filters.dateTo}"`);
+  return parts.join(' AND ') + ' order by updated DESC';
+}
+
+function buildIssueJql(filters: WorklogSearchFilters, activeProjects: string[]): string {
+  const parts: string[] = ['issuetype in standardIssueTypes()', 'issuetype != "Epic"'];
+
+  if (filters.freeText) {
+    const query = filters.freeText.trim().replace(/"/g, '\\"').replace(/'/g, "\\'");
+    if (/^[A-Za-z]+-[0-9]+$/.test(query)) {
+      // Direct issue key match - bypass active projects scoping to allow manual entry of other project keys
+      return `key = "${query.toUpperCase()}" AND issuetype in standardIssueTypes() AND issuetype != "Epic"`;
+    } else {
+      parts.push(`summary ~ "${query}*"`);
+    }
+  }
+
+  // Restrict search to active projects + ADM project
+  const allowedProjects = [...new Set([...activeProjects, 'ADM'])];
+  if (allowedProjects.length > 0) {
+    const projQuery = allowedProjects.map((p) => `"${p}"`).join(', ');
+    parts.push(`project in (${projQuery})`);
+  }
+
+  if (filters.project) {
+    parts.push(`project = "${filters.project}"`);
+  }
+  if (filters.assignee) {
+    parts.push(`assignee = "${filters.assignee}"`);
+  }
+  if (filters.status) {
+    parts.push(`status = "${filters.status}"`);
   }
 
   return parts.join(' AND ') + ' order by updated DESC';
@@ -305,6 +334,39 @@ export async function searchWorklogs(
   return { items: paged, total, page, pageSize, totalPages, totalHours };
 }
 
+const activeProjectsCache = new Map<string, { projects: string[]; expires: number }>();
+
+async function getUserActiveProjects(connection: JiraConnection, userId: string): Promise<string[]> {
+  const cached = activeProjectsCache.get(userId);
+  if (cached && cached.expires > Date.now()) {
+    return cached.projects;
+  }
+
+  try {
+    const data = (await jiraPost(connection, '/rest/api/3/search/jql', {
+      jql: 'assignee = currentUser() OR worklogAuthor = currentUser() OR reporter = currentUser()',
+      fields: ['project'],
+      maxResults: 50,
+    })) as { issues?: { fields?: { project?: { key?: string } } }[] };
+
+    const keys = new Set<string>();
+    for (const issue of data.issues ?? []) {
+      const k = issue.fields?.project?.key;
+      if (k) keys.add(k);
+    }
+
+    const projectsList = Array.from(keys);
+    activeProjectsCache.set(userId, {
+      projects: projectsList,
+      expires: Date.now() + 5 * 60 * 1000, // 5 min cache
+    });
+    return projectsList;
+  } catch (err) {
+    console.error('[getUserActiveProjects] failed:', err);
+    return [];
+  }
+}
+
 export async function searchIssues(
   userId: string,
   filters: WorklogSearchFilters,
@@ -312,7 +374,8 @@ export async function searchIssues(
   pageSize: number = 50,
 ): Promise<{ items: IssueSearchResult[]; total: number }> {
   const connection = await getActiveJiraConnection(userId);
-  const jql = buildJql(filters);
+  const activeProjects = await getUserActiveProjects(connection, userId);
+  const jql = buildIssueJql(filters, activeProjects);
 
   const searchData = (await jiraPost(
     connection,

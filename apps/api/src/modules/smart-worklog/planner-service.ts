@@ -112,7 +112,7 @@ export function computePlan(input: PlannerInput, issueMap: Map<string, IssueInfo
       };
     });
 
-    const freeSlots = computeFreeSlots(input.dailyHours, input.routineTasks);
+    const freeSlots = computeFreeSlots(input.dailyHours, input.routineTasks, input.workdayStart);
     routineWorklogsByDate.set(dateStr, routineWorklogs);
     freeSlotsByDate.set(dateStr, freeSlots);
     monthlyFreeHours += freeSlots.reduce(
@@ -156,7 +156,7 @@ export function computePlan(input: PlannerInput, issueMap: Map<string, IssueInfo
         holidayWorklogs.push({
           issueId: info.issueId,
           issueKey: info.issueKey,
-          startTime: WORKDAY_START,
+          startTime: input.workdayStart || WORKDAY_START,
           hours: dailyHours,
         });
       }
@@ -222,8 +222,9 @@ function hoursToMinutes(hours: number): number {
 function computeFreeSlots(
   dailyHours: number,
   routines: { startTime: string; endTime: string }[],
+  workdayStartInput?: string,
 ): TimeSlot[] {
-  const workStart = timeToMinutes(WORKDAY_START);
+  const workStart = timeToMinutes(workdayStartInput || WORKDAY_START);
   const workEnd = workStart + hoursToMinutes(dailyHours);
   const busy = routines
     .map((r) => ({

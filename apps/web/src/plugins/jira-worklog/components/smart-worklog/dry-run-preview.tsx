@@ -84,35 +84,26 @@ export function DryRunPreview({ data }: Props) {
               )}
             </div>
 
-            {day.routineWorklogs.length > 0 && (
-              <div className="ml-5 mt-1.5 space-y-0.5">
-                {day.routineWorklogs.map((wl) => (
-                  <div
-                    key={`${day.date}-${wl.issueId}-${wl.startTime}`}
-                    className="flex items-center gap-2 text-xs text-muted-foreground"
-                  >
-                    <Clock size={10} className="shrink-0" />
-                    <span className="font-medium text-foreground">{wl.issueKey}</span>
-                    <span>{formatTimeRange(wl.startTime, wl.hours)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {day.distributeWorklogs.length > 0 && (
-              <div className="ml-5 mt-1 space-y-0.5">
-                {day.distributeWorklogs.map((wl) => (
-                  <div
-                    key={`${day.date}-${wl.issueId}-${wl.startTime}`}
-                    className="flex items-center gap-2 text-xs text-muted-foreground"
-                  >
-                    <Clock size={10} className="shrink-0" />
-                    <span className="font-medium text-foreground">{wl.issueKey}</span>
-                    <span>{formatTimeRange(wl.startTime, wl.hours)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {(() => {
+              const allWorklogs = [...day.routineWorklogs, ...day.distributeWorklogs].sort((a, b) =>
+                a.startTime.localeCompare(b.startTime)
+              );
+              if (allWorklogs.length === 0) return null;
+              return (
+                <div className="ml-5 mt-1.5 space-y-0.5">
+                  {allWorklogs.map((wl) => (
+                    <div
+                      key={`${day.date}-${wl.issueId}-${wl.startTime}`}
+                      className="flex items-center gap-2 text-xs text-muted-foreground"
+                    >
+                      <Clock size={10} className="shrink-0" />
+                      <span className="font-medium text-foreground">{wl.issueKey}</span>
+                      <span>{formatTimeRange(wl.startTime, wl.hours)}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         ))}
       </div>

@@ -4,6 +4,7 @@ export interface RoutineTask {
   id: string;
   issueId: string;
   issueKey: string;
+  issueSummary?: string;
   startTime: string;
   endTime: string;
 }
@@ -12,6 +13,7 @@ export interface DistributeTask {
   id: string;
   issueId: string;
   issueKey: string;
+  issueSummary?: string;
   percentage: number;
 }
 
@@ -23,11 +25,13 @@ interface PlannerState {
   routineTasks: RoutineTask[];
   distributeTasks: DistributeTask[];
   holidayTaskIssueId: string;
+  workdayStart: string;
 
   setYear: (year: number) => void;
   setMonth: (month: number) => void;
   setDailyHours: (hours: number) => void;
   setHolidayTaskIssueId: (issueId: string) => void;
+  setWorkdayStart: (time: string) => void;
   addHoliday: (date: string) => void;
   removeHoliday: (date: string) => void;
   addRoutineTask: (task: RoutineTask) => void;
@@ -55,6 +59,7 @@ function getInitialState() {
     routineTasks: [] as RoutineTask[],
     distributeTasks: [] as DistributeTask[],
     holidayTaskIssueId: '',
+    workdayStart: '09:30',
   };
 }
 
@@ -67,6 +72,7 @@ export const usePlannerStore = create<PlannerState>((set) => ({
   setDailyHours: (dailyHours) => set({ dailyHours }),
 
   setHolidayTaskIssueId: (holidayTaskIssueId) => set({ holidayTaskIssueId }),
+  setWorkdayStart: (workdayStart) => set({ workdayStart }),
 
   addHoliday: (date) =>
     set((s) => ({

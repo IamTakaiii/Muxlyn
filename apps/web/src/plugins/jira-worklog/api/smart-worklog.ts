@@ -21,6 +21,7 @@ export interface PlannerInput {
   distributeTasks: DistributeTaskInput[];
   holidayTaskIssueId?: string;
   language?: 'en' | 'th';
+  workdayStart?: string;
 }
 
 export interface PlannedWorklog {

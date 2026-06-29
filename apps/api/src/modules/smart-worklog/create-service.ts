@@ -97,10 +97,10 @@ function flattenPlan(plan: DryRunResponse): PlanItem[] {
   const items: PlanItem[] = [];
 
   for (const day of plan.days) {
-    for (const wl of day.routineWorklogs) {
-      items.push({ ...wl, date: day.date });
-    }
-    for (const wl of day.distributeWorklogs) {
+    const dayItems = [...day.routineWorklogs, ...day.distributeWorklogs].sort((a, b) =>
+      a.startTime.localeCompare(b.startTime)
+    );
+    for (const wl of dayItems) {
       items.push({ ...wl, date: day.date });
     }
   }

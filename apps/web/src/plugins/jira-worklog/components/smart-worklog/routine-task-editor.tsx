@@ -2,10 +2,9 @@ import { Plus, Repeat, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
 import { TimePicker } from '@/shared/components/ui/time-picker';
-import { useIssueSearch } from '../../api/search';
 import { usePlannerStore } from '../../state/planner-store';
+import { IssueSearchSelect } from '../issue-search-select';
 
 export function RoutineTaskEditor() {
   const { t } = useTranslation();
@@ -14,33 +13,27 @@ export function RoutineTaskEditor() {
   const removeRoutineTask = usePlannerStore((s) => s.removeRoutineTask);
 
   const [showForm, setShowForm] = useState(false);
-  const [searchQ, setSearchQ] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('09:30');
   const [selectedIssue, setSelectedIssue] = useState<{
     id: string;
     key: string;
+    summary: string;
   } | null>(null);
-
-  const { data: issueResult } = useIssueSearch(
-    searchQ.length >= 2 ? { freeText: searchQ, pageSize: 10 } : null,
-  );
 
   function handleAdd() {
     if (startTime >= endTime) return;
-
-    const rawKey = searchQ.trim();
-    if (!selectedIssue && !rawKey) return;
+    if (!selectedIssue) return;
 
     addRoutineTask({
       id: '',
-      issueId: selectedIssue?.id ?? rawKey,
-      issueKey: selectedIssue?.key ?? rawKey,
+      issueId: selectedIssue.id,
+      issueKey: selectedIssue.key,
+      issueSummary: selectedIssue.summary,
       startTime,
       endTime,
     });
     setShowForm(false);
-    setSearchQ('');
     setSelectedIssue(null);
     setStartTime('09:00');
     setEndTime('09:30');
@@ -69,38 +62,12 @@ export function RoutineTaskEditor() {
       {/* Add form */}
       {showForm && (
         <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-          <div className="relative w-full">
-            <Input
-              type="text"
-              value={selectedIssue ? selectedIssue.key : searchQ}
-              onChange={(e) => {
-                setSearchQ(e.target.value);
-                setSelectedIssue(null);
-              }}
-              placeholder={t('smartWorklog.searchTask')}
-              className="h-9 text-sm"
-            />
-            {!selectedIssue && issueResult?.items && (
-              <div className="absolute z-10 mt-1 max-h-32 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
-                {issueResult.items
-                  .filter((issue) => !issue.isSubtask)
-                  .map((issue) => (
-                    <button
-                      key={issue.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedIssue({ id: issue.id, key: issue.key });
-                        setSearchQ(issue.key);
-                      }}
-                      className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent"
-                    >
-                      <span className="font-medium">{issue.key}</span>{' '}
-                      <span className="text-muted-foreground">{issue.summary}</span>
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
+          <IssueSearchSelect
+            value={selectedIssue}
+            onChange={setSelectedIssue}
+            placeholder={t('smartWorklog.searchTask')}
+            className="h-9 text-sm"
+          />
 
           <div className="flex items-center gap-2 flex-wrap">
             <TimePicker value={startTime} onChange={setStartTime} />
@@ -109,7 +76,7 @@ export function RoutineTaskEditor() {
             <Button
               size="sm"
               onClick={handleAdd}
-              disabled={(!selectedIssue && !searchQ.trim()) || startTime >= endTime}
+              disabled={!selectedIssue || startTime >= endTime}
               className="ml-auto"
             >
               Add
@@ -135,9 +102,14 @@ export function RoutineTaskEditor() {
                 key={task.id}
                 className="flex items-center justify-between rounded-lg border bg-card px-3 py-2.5 text-sm"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <span className="font-medium text-foreground shrink-0">{task.issueKey}</span>
-                  <span className="text-muted-foreground truncate">
+                  {task.issueSummary && (
+                    <span className="text-muted-foreground truncate text-xs flex-1">
+                      {task.issueSummary}
+                    </span>
+                  )}
+                  <span className="text-muted-foreground shrink-0 text-xs font-mono">
                     {task.startTime} – {task.endTime}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">

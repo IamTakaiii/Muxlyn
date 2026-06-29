@@ -21,7 +21,7 @@ import {
   type BulkCreateResult,
   useBulkCreateWorklogs,
 } from '../api/bulk-worklog';
-import { type IssueSearchItem, useIssueSearch, type WorklogSearchFilters } from '../api/search';
+import { IssueSearchSelect } from './issue-search-select';
 
 interface CalendarCreateDialogProps {
   date: string;
@@ -67,9 +67,11 @@ export function CalendarCreateDialog({
   onCreated,
 }: CalendarCreateDialogProps) {
   const { t, i18n } = useTranslation();
-  const [searchText, setSearchText] = useState('');
-  const [results, setResults] = useState<IssueSearchItem[] | null>(null);
-  const [selectedIssue, setSelectedIssue] = useState<IssueSearchItem | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<{
+    id: string;
+    key: string;
+    summary: string;
+  } | null>(null);
   const [dateFrom, setDateFrom] = useState(date);
   const [dateTo, setDateTo] = useState(date);
   const [skipWeekends, setSkipWeekends] = useState(true);
@@ -79,20 +81,9 @@ export function CalendarCreateDialog({
   const [minutes, setMinutes] = useState(0);
   const [comment, setComment] = useState('');
   const [result, setResult] = useState<BulkCreateResult | null>(null);
-  const [searchFilters, setSearchFilters] = useState<WorklogSearchFilters | null>(null);
 
-  const { data: issueResult, isLoading: searchLoading } = useIssueSearch(
-    searchFilters,
-    !!searchFilters,
-  );
   const createMutation = useBulkCreateWorklogs();
-  const isLoading = searchLoading || createMutation.isPending;
-
-  useEffect(() => {
-    if (issueResult) {
-      setResults(issueResult.items);
-    }
-  }, [issueResult]);
+  const isLoading = createMutation.isPending;
 
   const dayCount = useMemo(() => {
     let days = datesBetween(dateFrom, dateTo);
@@ -108,14 +99,9 @@ export function CalendarCreateDialog({
     return formatHours(hoursNum);
   }, [hours, minutes, dayCount]);
 
-  const handleSearch = useCallback(() => {
-    if (!searchText.trim()) return;
-    setSearchFilters({ freeText: searchText.trim() });
-  }, [searchText]);
-
   const handleSubmit = useCallback(() => {
-    const targetIssueId = selectedIssue ? selectedIssue.id : searchText.trim();
-    if (!targetIssueId) return;
+    if (!selectedIssue) return;
+    const targetIssueId = selectedIssue.id;
 
     const durationSeconds = hours * 3600 + minutes * 60;
     let dates = datesBetween(dateFrom, dateTo);
@@ -141,7 +127,6 @@ export function CalendarCreateDialog({
     });
   }, [
     selectedIssue,
-    searchText,
     dateFrom,
     dateTo,
     hours,
@@ -158,8 +143,6 @@ export function CalendarCreateDialog({
     onOpenChange(false);
     if (!createMutation.isPending) {
       setTimeout(() => {
-        setSearchText('');
-        setResults(null);
         setSelectedIssue(null);
         setDateFrom(date);
         setDateTo(date);
@@ -170,7 +153,6 @@ export function CalendarCreateDialog({
         setMinutes(0);
         setComment('');
         setResult(null);
-        setSearchFilters(null);
         createMutation.reset();
       }, 200);
     }
@@ -245,74 +227,12 @@ export function CalendarCreateDialog({
                 <Label htmlFor="issue-key" className="text-xs text-muted-foreground">
                   {t('plugin.jiraWorklog.name')} ({t('worklog.search_button')} / Key)
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="issue-key"
-                    placeholder={t('worklog.search_placeholder_dialog')}
-                    value={searchText}
-                    onChange={(e) => {
-                      setSearchText(e.target.value);
-                      setSelectedIssue(null);
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="h-9 text-sm flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={handleSearch}
-                    disabled={isLoading || !searchText.trim()}
-                    className="h-9 w-9 shrink-0"
-                  >
-                    {searchLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                {selectedIssue && (
-                  <div className="rounded-md border border-green-500/20 bg-green-50/50 dark:bg-green-950/10 p-2.5 mt-1.5 text-xs">
-                    <p className="font-mono font-medium text-green-700 dark:text-green-400">
-                      Selected: {selectedIssue.key}
-                    </p>
-                    <p className="text-muted-foreground truncate">{selectedIssue.summary}</p>
-                  </div>
-                )}
-                {results && results.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No issues found.</p>
-                )}
-                {results && results.length > 0 && (
-                  <div className="max-h-40 overflow-y-auto rounded-md border divide-y bg-background mt-1.5">
-                    {results.map((issue) => (
-                      <button
-                        key={issue.id}
-                        type="button"
-                        onClick={() => {
-                          setSearchText(issue.key);
-                          setSelectedIssue(issue);
-                          setResults(null);
-                        }}
-                        disabled={issue.isSubtask}
-                        className={cn(
-                          'w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors text-xs flex justify-between items-center',
-                          issue.isSubtask && 'opacity-50',
-                        )}
-                      >
-                        <div className="truncate pr-2">
-                          <span className="font-mono font-medium">{issue.key}</span>
-                          <span className="ml-2 text-muted-foreground truncate">
-                            {issue.summary}
-                          </span>
-                        </div>
-                        {issue.isSubtask && (
-                          <span className="text-[10px] text-destructive shrink-0">(sub-task)</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <IssueSearchSelect
+                  value={selectedIssue}
+                  onChange={setSelectedIssue}
+                  placeholder={t('worklog.search_placeholder_dialog')}
+                  className="h-9 text-sm"
+                />
               </div>
 
               {/* Date range */}
@@ -465,9 +385,7 @@ export function CalendarCreateDialog({
                     isLoading ||
                     (hours === 0 && minutes === 0) ||
                     dayCount === 0 ||
-                    !searchText.trim() ||
-                    selectedIssue?.isSubtask ||
-                    false
+                    !selectedIssue
                   }
                 >
                   {createMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}

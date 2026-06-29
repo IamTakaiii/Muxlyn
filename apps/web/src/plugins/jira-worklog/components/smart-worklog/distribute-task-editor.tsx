@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
-import { useIssueSearch } from '../../api/search';
 import { usePlannerStore } from '../../state/planner-store';
+import { IssueSearchSelect } from '../issue-search-select';
 
 const MAX_TASKS = 20;
 
@@ -17,32 +17,26 @@ export function DistributeTaskEditor() {
   const autoDistribute = usePlannerStore((s) => s.autoDistribute);
 
   const [showForm, setShowForm] = useState(false);
-  const [searchQ, setSearchQ] = useState('');
   const [selectedIssue, setSelectedIssue] = useState<{
     id: string;
     key: string;
+    summary: string;
   } | null>(null);
-
-  const { data: issueResult } = useIssueSearch(
-    searchQ.length >= 2 ? { freeText: searchQ, pageSize: 10 } : null,
-  );
 
   const totalPct = distributeTasks.reduce((sum, t) => sum + t.percentage, 0);
   const isValid = Math.abs(totalPct - 100) <= 0.5;
 
   function handleAdd() {
     if (distributeTasks.length >= MAX_TASKS) return;
-
-    const rawKey = searchQ.trim();
-    if (!selectedIssue && !rawKey) return;
+    if (!selectedIssue) return;
 
     addDistributeTask({
       id: '',
-      issueId: selectedIssue?.id ?? rawKey,
-      issueKey: selectedIssue?.key ?? rawKey,
+      issueId: selectedIssue.id,
+      issueKey: selectedIssue.key,
+      issueSummary: selectedIssue.summary,
       percentage: 0,
     });
-    setSearchQ('');
     setSelectedIssue(null);
     setShowForm(false);
   }
@@ -93,41 +87,15 @@ export function DistributeTaskEditor() {
 
       {/* Add form */}
       {(showForm || distributeTasks.length === 0) && distributeTasks.length < MAX_TASKS && (
-        <div className="flex gap-2 rounded-lg border bg-muted/30 p-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Input
-              type="text"
-              value={selectedIssue ? selectedIssue.key : searchQ}
-              onChange={(e) => {
-                setSearchQ(e.target.value);
-                setSelectedIssue(null);
-              }}
-              placeholder={t('smartWorklog.searchTask')}
-              className="h-9 text-sm"
-            />
-            {!selectedIssue && issueResult?.items && (
-              <div className="absolute z-10 mt-1 max-h-32 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
-                {issueResult.items
-                  .filter((issue) => !issue.isSubtask)
-                  .map((issue) => (
-                    <button
-                      key={issue.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedIssue({ id: issue.id, key: issue.key });
-                        setSearchQ(issue.key);
-                      }}
-                      className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent"
-                    >
-                      <span className="font-medium">{issue.key}</span>{' '}
-                      <span className="text-muted-foreground">{issue.summary}</span>
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
-          <Button size="sm" onClick={handleAdd} disabled={!selectedIssue && !searchQ.trim()}>
-            {t('smartWorklog.addDistributeTask')}
+        <div className="flex gap-2 rounded-lg border bg-muted/30 p-3 items-end">
+          <IssueSearchSelect
+            value={selectedIssue}
+            onChange={setSelectedIssue}
+            placeholder={t('smartWorklog.searchTask')}
+            className="h-9 text-sm"
+          />
+          <Button size="sm" onClick={handleAdd} disabled={!selectedIssue} className="shrink-0 h-9">
+            Add
           </Button>
         </div>
       )}
@@ -152,9 +120,14 @@ export function DistributeTaskEditor() {
               key={task.id}
               className="flex flex-col gap-1.5 rounded-lg border bg-card px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-3"
             >
-              <span className="font-medium text-foreground shrink-0 sm:w-24 truncate">
-                {task.issueKey}
-              </span>
+              <div className="min-w-0 flex-1 sm:flex-initial sm:w-64 flex flex-col sm:flex-row sm:items-center gap-1.5">
+                <span className="font-medium text-foreground shrink-0">{task.issueKey}</span>
+                {task.issueSummary && (
+                  <span className="text-muted-foreground truncate text-xs flex-1">
+                    {task.issueSummary}
+                  </span>
+                )}
+              </div>
 
               {/* Slider */}
               <div className="flex flex-1 items-center gap-2 min-w-0">

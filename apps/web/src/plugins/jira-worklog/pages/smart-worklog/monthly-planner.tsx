@@ -40,6 +40,7 @@ export default function MonthlyPlanner() {
   const routineTasks = usePlannerStore((s) => s.routineTasks);
   const holidayTaskIssueId = usePlannerStore((s) => s.holidayTaskIssueId);
   const distributeTasks = usePlannerStore((s) => s.distributeTasks);
+  const workdayStart = usePlannerStore((s) => s.workdayStart);
 
   const dryRunMutation = useDryRun();
   const createMutation = useCreateAll();
@@ -61,8 +62,9 @@ export default function MonthlyPlanner() {
         routineTasks,
         distributeTasks,
         holidayTaskIssueId,
+        workdayStart,
       }),
-    [year, month, holidays, dailyHours, routineTasks, distributeTasks, holidayTaskIssueId],
+    [year, month, holidays, dailyHours, routineTasks, distributeTasks, holidayTaskIssueId, workdayStart],
   );
   const previousPlannerSignature = useRef(plannerSignature);
 
@@ -97,6 +99,7 @@ export default function MonthlyPlanner() {
           percentage: t.percentage,
         })),
         holidayTaskIssueId: holidayTaskIssueId || undefined,
+        workdayStart,
       },
       {
         onSuccess: (res) => {
@@ -139,6 +142,7 @@ export default function MonthlyPlanner() {
           percentage: t.percentage,
         })),
         holidayTaskIssueId: holidayTaskIssueId || undefined,
+        workdayStart,
       },
       {
         onSuccess: (res) => {
