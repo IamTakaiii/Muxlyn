@@ -15,6 +15,7 @@ import {
 import { Textarea } from '@/shared/components/ui/textarea';
 import { TimePicker } from '@/shared/components/ui/time-picker';
 import { useIssueInfo, useUpdateWorklog, useWorklog } from '../api/worklog';
+import { formatJiraDateTimeFromParts } from '../lib/jira-datetime';
 
 interface WorklogEditDialogProps {
   worklogId: string;
@@ -73,10 +74,10 @@ export function WorklogEditDialog({
     if (hours <= 0 && minutes <= 0) return;
 
     const durationSeconds = hours * 3600 + minutes * 60;
-    const local = new Date(
-      `${date}T${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}:00`,
+    const started = formatJiraDateTimeFromParts(
+      date,
+      `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}:00`,
     );
-    const started = local.toISOString().replace('Z', '+0000');
 
     updateMutation.mutate(
       {

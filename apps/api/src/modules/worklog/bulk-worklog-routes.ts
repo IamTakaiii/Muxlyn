@@ -31,7 +31,7 @@ const bulkCreateEntry = t.Object({
   date: t.String({ format: 'date' }),
   durationSeconds: t.Number({ minimum: 1 }),
   comment: t.Optional(t.String()),
-  started: t.Optional(t.String()),
+  started: t.String(),
 });
 
 const bulkEditEntry = t.Object({

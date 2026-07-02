@@ -26,6 +26,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { cn, formatHours } from '@/shared/lib/utils';
+import { formatJiraDateTime } from '../lib/jira-datetime';
 
 const SmartWorklogPage = lazy(() => import('./smart-worklog/monthly-planner'));
 
@@ -44,24 +45,6 @@ function colorForKey(key: string): string {
   let hash = 0;
   for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0;
   return EVENT_COLORS[Math.abs(hash) % EVENT_COLORS.length];
-}
-
-function formatJiraDateTime(dateStr: string): string {
-  const cleanDateStr = dateStr.includes('T') ? dateStr : `${dateStr}T09:00:00`;
-  const date = new Date(cleanDateStr);
-  const yyyy = date.getFullYear();
-  const MM = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const HH = String(date.getHours()).padStart(2, '0');
-  const mm = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-  const SSS = String(date.getMilliseconds()).padStart(3, '0');
-  const offsetMinutes = date.getTimezoneOffset();
-  const offsetSign = offsetMinutes <= 0 ? '+' : '-';
-  const absOffsetMinutes = Math.abs(offsetMinutes);
-  const offsetHours = String(Math.floor(absOffsetMinutes / 60)).padStart(2, '0');
-  const offsetMins = String(absOffsetMinutes % 60).padStart(2, '0');
-  return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}.${SSS}${offsetSign}${offsetHours}${offsetMins}`;
 }
 
 const EIGHT_HOURS_SECONDS = 28_800;
@@ -207,7 +190,7 @@ export default function CalendarPage() {
       if (!event) return;
 
       const issueId = event.extendedProps.issueId;
-      const started = new Date(newStartStr).toISOString().replace('Z', '+0000');
+      const started = formatJiraDateTime(new Date(newStartStr));
       const durationSeconds = Math.round(event.extendedProps.hours * 3600);
       const range = calendarRange;
 

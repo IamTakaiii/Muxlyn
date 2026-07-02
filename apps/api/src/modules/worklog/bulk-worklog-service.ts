@@ -20,7 +20,7 @@ export interface BulkCreateEntry {
   date: string;
   durationSeconds: number;
   comment?: string;
-  started?: string;
+  started: string;
 }
 
 export interface BulkEditEntry {
@@ -117,10 +117,6 @@ function hoursFromSeconds(seconds: number): number {
   return Math.round((seconds / 3600) * 100) / 100;
 }
 
-function toStartedDatetime(date: string): string {
-  return `${date}T00:00:00.000+0000`;
-}
-
 export async function processBulkCreate(
   userId: string,
   entries: BulkCreateEntry[],
@@ -153,7 +149,7 @@ export async function processBulkCreate(
   let totalHours = 0;
 
   for (const entry of entries) {
-    const started = entry.started ?? toStartedDatetime(entry.date);
+    const started = entry.started;
 
     try {
       const issue = await getJiraIssue(connection, entry.issueId);

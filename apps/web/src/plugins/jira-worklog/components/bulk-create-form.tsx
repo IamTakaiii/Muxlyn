@@ -15,6 +15,7 @@ import {
   type BulkCreateEntry,
   type BulkCreateResult,
 } from '../api/bulk-worklog';
+import { formatJiraDateTimeFromParts, formatLocalISODate } from '../lib/jira-datetime';
 
 interface TaskInfo {
   issueId: string;
@@ -37,7 +38,7 @@ interface BulkCreateFormProps {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return formatLocalISODate();
 }
 
 function durationToSeconds(hours: number, minutes: number): number {
@@ -109,6 +110,7 @@ export function BulkCreateForm({
     () =>
       tasks.map((t) => {
         const over = overrides[t.issueId];
+        const dateTime = formatJiraDateTimeFromParts(commonDate);
         return {
           issueId: t.issueId,
           date: commonDate,
@@ -117,6 +119,7 @@ export function BulkCreateForm({
             over?.durationMinutes ?? commonMinutes,
           ),
           comment: over?.comment,
+          started: dateTime,
         };
       }),
     [tasks, overrides, commonDate, commonHours, commonMinutes],
