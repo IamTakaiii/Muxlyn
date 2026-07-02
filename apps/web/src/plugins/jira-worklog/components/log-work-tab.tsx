@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/lib/utils';
+import { formatJiraDateTimeFromParts } from '../lib/jira-datetime';
 import { type IssueSearchItem, useIssueSearch, type WorklogSearchFilters } from '../api/search';
 import { type CreateWorklogInput, useCreateWorklog } from '../api/worklog';
 import { BulkCreateForm } from './bulk-create-form';
@@ -78,9 +79,7 @@ export function LogWorkTab({ onWorklogCreated }: LogWorkTabProps) {
       setCreating((prev) => ({ ...prev, [issue.id]: true }));
       const now = new Date();
       const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const started = new Date(`${date}T00:00:00`)
-        .toISOString()
-        .replace('Z', '+0000');
+      const started = formatJiraDateTimeFromParts(date);
       const input: CreateWorklogInput = {
         issueId: issue.id,
         date,

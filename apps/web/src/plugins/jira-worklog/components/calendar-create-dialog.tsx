@@ -22,6 +22,7 @@ import {
   useBulkCreateWorklogs,
 } from '../api/bulk-worklog';
 import { IssueSearchSelect } from './issue-search-select';
+import { formatJiraDateTimeFromParts } from '../lib/jira-datetime';
 
 interface CalendarCreateDialogProps {
   date: string;
@@ -115,7 +116,7 @@ export function CalendarCreateDialog({
       date: d,
       durationSeconds,
       comment: comment || undefined,
-      started: `${d}T${started}.000+0000`,
+      started: formatJiraDateTimeFromParts(d, started),
     }));
     createMutation.mutate(entries, {
       onSuccess: (res) => {
