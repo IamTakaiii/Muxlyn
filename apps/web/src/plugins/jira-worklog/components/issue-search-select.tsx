@@ -92,7 +92,9 @@ export function IssueSearchSelect({
             </div>
           )}
           {issueResult.items
-            .filter((issue) => !issue.isSubtask && issue.issueType.toLowerCase() !== 'epic')
+            .filter(
+              (issue) => !issue.isSubtask && (issue.issueType.toLowerCase() !== 'epic' || issue.projectKey === 'ADM'),
+            )
             .map((issue) => (
               <button
                 key={issue.id}
