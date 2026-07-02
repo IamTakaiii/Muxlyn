@@ -248,7 +248,7 @@ export default function CalendarPage() {
       const e = contextMenu.event;
       const eventDate = e.start.slice(0, 10);
       const durationSeconds = Math.round(e.extendedProps.hours * 3600);
-      const started = formatJiraDateTime(e.start);
+      const started = formatJiraDateTime(new Date(e.start));
 
       bulkCreateMutation.mutate(
         [
