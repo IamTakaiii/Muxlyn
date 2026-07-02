@@ -166,13 +166,13 @@ function buildJql(filters: WorklogSearchFilters): string {
 }
 
 function buildIssueJql(filters: WorklogSearchFilters, activeProjects: string[]): string {
-  const parts: string[] = ['issuetype in standardIssueTypes()', 'issuetype != "Epic"'];
+  const parts: string[] = ['(issuetype in standardIssueTypes() OR (issuetype = Epic AND project = "ADM"))'];
 
   if (filters.freeText) {
     const query = filters.freeText.trim().replace(/"/g, '\\"').replace(/'/g, "\\'");
     if (/^[A-Za-z]+-[0-9]+$/.test(query)) {
       // Direct issue key match - bypass active projects scoping to allow manual entry of other project keys
-      return `key = "${query.toUpperCase()}" AND issuetype in standardIssueTypes() AND issuetype != "Epic"`;
+      return `key = "${query.toUpperCase()}" AND (issuetype in standardIssueTypes() OR (issuetype = Epic AND project = "ADM"))`;
     } else {
       parts.push(`(key ~ "${query.toUpperCase()}*" OR summary ~ "${query}*")`);
     }
